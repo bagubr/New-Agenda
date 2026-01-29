@@ -65,7 +65,7 @@ class SuratMasukController extends Controller
     {
         $no_agenda = SuratMasuk::orderBy('no_agenda', 'desc')->first()->no_agenda + 1;
         $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->get();
-        $asal = DB::table('surat_masuk')->select('asal')->orderBy('no_agenda', 'desc')->get()->pluck('asal', 'asal')->unique();
+        $asal = DB::table('surat_masuk')->select('asal')->orderBy('asal')->get()->pluck('asal', 'asal')->unique();
         return view('surat-masuk.create', compact('disposisi', 'no_agenda', 'asal'));
     }
 
@@ -220,8 +220,9 @@ class SuratMasukController extends Controller
                 $file = 'notulen_file_' . $no_agenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
                 $value->storeAs('notulen_files', $file, 'public');
                 NotulenFile::create([
-                    'notulen_masuk_id' => $notulen_masuk->id,
+                    'notulen_id'       => $notulen_masuk->id,
                     'file'             => $file,
+                    'jenis'            => 'IN',
                     'original_name'    => $original_name,
                 ]);
             }
@@ -242,7 +243,7 @@ class SuratMasukController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan']);
             }
 
-            $notulen_masuk->files = NotulenFile::where('notulen_masuk_id', $notulen_masuk->id)->get();
+            $notulen_masuk->files = NotulenFile::whereJenis('IN')->where('notulen_id', $notulen_masuk->id)->get();
             
             return response()->json(['status' => 'success', 'notulen' => $notulen_masuk]);
         } catch (\Throwable $th) {
@@ -290,8 +291,9 @@ class SuratMasukController extends Controller
                     $file = 'notulen_file_' . $notulen_masuk->noagenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
                     $value->storeAs('notulen_files', $file, 'public');
                     NotulenFile::create([
-                        'notulen_masuk_id' => $notulen_masuk->id,
+                        'notulen_id' => $notulen_masuk->id,
                         'file'             => $file,
+                        'jenis'            => 'IN',
                         'original_name'    => $value->getClientOriginalName(),
                     ]);
                 }

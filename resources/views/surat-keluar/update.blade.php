@@ -71,8 +71,8 @@
                                 </div>
                             </div>
                             <div class="mb-1">
-                                <label for="tempat" class="form-label">Tempat Agenda / Undagan</label>
-                                <textarea name="tempat" class="form-control" style="width: 100%; height:100px;" id="tempat" required>{{$surat_keluar->tempat}}</textarea>
+                                <label for="tmpt" class="form-label">Tempat Agenda / Undagan</label>
+                                <textarea name="tmpt" class="form-control" style="width: 100%; height:100px;" id="tmpt" required>{{$surat_keluar->tmpt}}</textarea>
                             </div>
                             <div class="mb-1">
                                 <label for="acara" class="form-label">Acara</label>
@@ -87,8 +87,8 @@
                                 <input type="text" name="asal" class="form-control" id="asal" required value="{{$surat_keluar->asal}}"/>
                             </div>
                             <div class="mb-1">
-                                <label for="penerima" class="form-label">Penerima</label>
-                                <input type="text" name="penerima" class="form-control" id="penerima" value="{{$surat_keluar->penerima}}"/>
+                                <label for="penandatangan" class="form-label">Penandatangan</label>
+                                <input type="text" name="penandatangan" class="form-control" id="penandatangan" value="{{$surat_keluar->penandatangan}}"/>
                             </div>
                             <div class="mb-1">
                                 <label for="note" class="form-label">Catatan</label>
@@ -109,7 +109,7 @@
                                     <input type="hidden" name="id[]" class="form-control" value="{{$item->id}}"/>
                                     <div class="input-group-prepend">
                                         <div class="input-group-text bg-danger">
-                                            <a class="" onclick="deleteDispo({{ $item->id }}, '{{ route('dispo-masuk-delete', $item->id) }}')"><i class="bi bi-trash" style="color: white;"></i></a>
+                                            <a class="" onclick="deleteDispo({{ $item->id }}, '{{ route('dispo-keluar-delete', $item->id) }}')"><i class="bi bi-trash" style="color: white;"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -144,6 +144,14 @@
 
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    var config_text = {
+		toolbar : 'Basic',
+		height: '100'
+	};
+	$('#perihal').ckeditor(config_text);
+	$('#note').ckeditor(config_text);
+</script>
 <script>
     function deleteDispo(id, url){
         Swal.fire({

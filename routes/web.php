@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DispoKeluarController;
 use App\Http\Controllers\DispoMasukController;
 use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\HomeController;
@@ -41,5 +42,6 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::put('/surat-keluar-notulen-update/{id}', [SuratKeluarController::class, 'notulenUpdate'])->name('surat-keluar-notulen-update');
     Route::get('/surat-keluar-notulen-data/{no_agenda}', [SuratKeluarController::class, 'notulenData'])->name('surat-keluar-notulen-data');
     Route::delete('/surat-keluar-notulen-file-delete/{id}', [SuratKeluarController::class, 'notulenFileDelete'])->name('surat-keluar-notulen-file-delete');
-
+    
+    Route::delete('/dispo_keluar/{dispo_keluar}', [DispoKeluarController::class, 'delete'])->name('dispo-keluar-delete');
 });

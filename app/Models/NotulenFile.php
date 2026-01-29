@@ -9,8 +9,9 @@ class NotulenFile extends Model
     protected $table = 'notulen_files';
 
     protected $fillable = [
-        'notulen_masuk_id',
+        'notulen_id',
         'file',
         'original_name',
+        'jenis',
     ];
 }

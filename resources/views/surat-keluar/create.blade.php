@@ -79,8 +79,8 @@
                                 </div>
                             </div>
                             <div class="mb-1">
-                                <label for="tempat" class="form-label">Tempat Agenda / Undagan</label>
-                                <select name=tempat id=tempat class="form-control" >
+                                <label for="tmpt" class="form-label">Tempat Agenda / Undangan</label>
+                                <select name=tmpt id=tmpt class="form-control" >
                                     <option value="">.: Pilihan Ruang :.</option>
                                     <option value="11" >R. Indraprastha</option>
                                     <option value="12" >R. Vishwakarma</option>
@@ -109,8 +109,17 @@
                                 </select>
                             </div>
                             <div class="mb-1">
-                                <label for="penerima" class="form-label">Penerima</label>
-                                <input type="text" name="penerima" class="form-control" id="penerima" />
+                                <label for="tujuan" class="form-label">Tujuan</label>
+                                <input type="text" name="tujuan" class="form-control" id="tujuan" />
+                            </div>
+                            <div class="mb-1">
+                                <label for="penandatangan" class="form-label">Penandatangan</label>
+                                <select name="penandatangan" id="penandatangan" class="form-select mb-2 select2" required>
+                                    <option value="">-- Pilih Penandatangan --</option>
+                                    @foreach ($penandatangan as $item)
+                                        <option value="{{$item}}">{{$item}}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="mb-1">
                                 <label for="note" class="form-label">Catatan</label>
@@ -165,6 +174,10 @@
             tags: true,
             width: 'resolve',
         });
+        $('#penandatangan').select2({
+            tags: true,
+            width: 'resolve',
+        });
     });
     
     $('#disposisi').on('change', function() {
@@ -195,7 +208,8 @@
                 processData: false,
                 success: function(response) {
                     if(response.status !== 'success'){
-                        let message = response.message || 'Terjadi kesalahan';
+                        console.log(response);
+                        let message = response.error || 'Terjadi kesalahan';
                         Swal.fire('Error', message, 'error');
                         return;
                     }

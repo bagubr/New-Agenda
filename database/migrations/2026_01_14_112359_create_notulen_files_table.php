@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('file');
             $table->string('original_name');
-            $table->unsignedBigInteger('notulen_masuk_id')->nullable();
-            $table->unsignedBigInteger('notulen_keluar_id')->nullable();
+            $table->unsignedBigInteger('notulen_id')->nullable();
+            $table->unsignedBigInteger('notulen_id')->nullable();
             $table->timestamps();
         });
 

@@ -79,7 +79,7 @@
                                 </div>
                             </div>
                             <div class="mb-1">
-                                <label for="tmpt" class="form-label">Tempat Agenda / Undagan</label>
+                                <label for="tmpt" class="form-label">Tempat Agenda / Undangan</label>
                                 <textarea name="tmpt" class="form-control" style="width: 100%; height:100px;" id="tmpt" required></textarea>
                             </div>
                             <div class="mb-1">
@@ -101,8 +101,8 @@
                                 <!-- <input type="text" name="asal" class="form-control" id="asal" required/> -->
                             </div>
                             <div class="mb-1">
-                                <label for="penerima" class="form-label">Penerima</label>
-                                <input type="text" name="penerima" class="form-control" id="penerima" required/>
+                                <label for="penandatangan" class="form-label">Penandatangan</label>
+                                <input type="text" name="penandatangan" class="form-control" id="penandatangan" required/>
                             </div>
                             <div class="mb-1">
                                 <label for="note" class="form-label">Catatan</label>

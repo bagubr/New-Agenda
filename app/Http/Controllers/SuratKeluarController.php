@@ -40,7 +40,7 @@ class SuratKeluarController extends Controller
                 $query->orWhere('surat_keluar.asal', 'like', '%' . $searchValue . '%');
                 $query->orWhereDate('surat_keluar.no_surat', 'like', '%' . $searchValue . '%');
                 $query->orWhere('surat_keluar.perihal', 'like', '%' . $searchValue . '%');
-                $query->orWhere('surat_keluar.tempat', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_keluar.tmpt', 'like', '%' . $searchValue . '%');
                 $query->orWhere('surat_keluar.jam', 'like', '%' . $searchValue . '%');
                 $query->orWhere('surat_keluar.acara', 'like', '%' . $searchValue . '%');
             });
@@ -66,8 +66,9 @@ class SuratKeluarController extends Controller
         $lastNoAgenda = SuratKeluar::orderBy('no_agenda', 'desc')->first();
         $no_agenda = $lastNoAgenda ? $lastNoAgenda->no_agenda + 1 : 1;
         $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->get();
-        $asal = DB::table('surat_keluar')->select('asal')->orderBy('no_agenda', 'desc')->get()->pluck('asal', 'asal')->unique();
-        return view('surat-keluar.create', compact('disposisi', 'no_agenda', 'asal'));
+        $asal = Disposisi::groupBy('disposisi')->orderBy('id')->get()->pluck('disposisi', 'disposisi')->unique();
+        $penandatangan = DB::table('surat_keluar')->select('penandatangan')->orderBy('penandatangan')->get()->pluck('penandatangan', 'penandatangan')->unique();
+        return view('surat-keluar.create', compact('disposisi', 'no_agenda', 'asal', 'penandatangan'));
     }
 
     public function edit(SuratKeluar $surat_keluar)
@@ -84,12 +85,13 @@ class SuratKeluarController extends Controller
             'tanggal'       => 'required',
             'tgl_agenda'    => 'sometimes',
             'jam'           => 'sometimes',
-            'tempat'        => 'required',
+            'tmpt'          => 'required',
             'acara'         => 'required',
             'no_surat'      => 'required|unique:surat_keluar,no_surat',
             'asal'          => 'required',
-            'penerima'      => 'sometimes',
+            'tujuan'        => 'sometimes',
             'publish'       => 'sometimes',
+            'penandatangan' => 'sometimes',
             'note'          => 'sometimes'
         ]);
         try {
@@ -98,7 +100,7 @@ class SuratKeluarController extends Controller
             $data['no_agenda'] = $lastNoAgenda ? $lastNoAgenda->no_agenda + 1 : 1;
             $data['user'] = Auth::user()->username;
             $data['periode'] = env('APP_PERIODE');
-
+            
             SuratKeluar::create($data);
             if ($request->disposisi) {
                 $disposisi = $request->validate([
@@ -136,11 +138,11 @@ class SuratKeluarController extends Controller
             'tanggal'       => 'required',
             'tgl_agenda'    => 'sometimes',
             'jam'           => 'sometimes',
-            'tempat'        => 'required',
+            'tmpt'          => 'required',
             'acara'         => 'required',
             'no_surat'      => 'required',
             'asal'          => 'required',
-            'penerima'      => 'sometimes',
+            'penandatangan' => 'sometimes',
             'publish'       => 'sometimes',
             'note'          => 'sometimes'
         ]);
@@ -186,8 +188,8 @@ class SuratKeluarController extends Controller
     public function delete(SuratKeluar $surat_keluar) 
     {
         try {
-            if($surat_keluar->disposisi()->count() > 0) {
-                $surat_keluar->disposisi()->delete();
+            if($surat_keluar->dispokeluar()->count() > 0) {
+                $surat_keluar->dispokeluar()->delete();
             }
             $surat_keluar->delete();
         } catch (\Throwable $th) {
@@ -221,8 +223,9 @@ class SuratKeluarController extends Controller
                 $file = 'notulen_file_' . $no_agenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
                 $value->storeAs('notulen_files', $file, 'public');
                 NotulenFile::create([
-                    'notulen_keluar_id' => $notulen_keluar->id,
+                    'notulen_id'        => $notulen_keluar->id,
                     'file'              => $file,
+                    'jenis'             => 'OUT',
                     'original_name'     => $value->getClientOriginalName(),
                 ]);
             }
@@ -243,7 +246,7 @@ class SuratKeluarController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan']);
             }
 
-            $notulen_keluar->files = NotulenFile::where('notulen_keluar_id', $notulen_keluar->id)->get();
+            $notulen_keluar->files = NotulenFile::whereJenis('OUT')->where('notulen_id', $notulen_keluar->id)->get();
             
             return response()->json(['status' => 'success', 'notulen' => $notulen_keluar]);
         } catch (\Throwable $th) {
@@ -291,8 +294,9 @@ class SuratKeluarController extends Controller
                     $file = 'notulen_file_' . $notulen_keluar->noagenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
                     $value->storeAs('notulen_files', $file, 'public');
                     NotulenFile::create([
-                        'notulen_keluar_id' => $notulen_keluar->id,
+                        'notulen_id' => $notulen_keluar->id,
                         'file'              => $file,
+                        'jenis'             => 'OUT',
                         'original_name'     => $value->getClientOriginalName(),
                     ]);
                 }

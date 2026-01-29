@@ -174,7 +174,7 @@
                             month: "long",
                             year: "numeric"
                         });
-                        return formatted + ' <b>(' + row.jam + ')</b> <hr> Tempat : '+row.tempat+'<hr>Acara : '+row.acara;
+                        return formatted + ' <b>(' + row.jam + ')</b> <hr> Tempat : '+row.tmpt+'<hr>Acara : '+row.acara;
                     }
                 },
                 {
@@ -216,6 +216,7 @@
         fetch(`{{ url('surat-keluar-notulen-data') }}/${noAgenda}`)
             .then(response => response.json())
             .then(data => {
+                console.log('Notulen Data:', data);
                 if(data.status === 'success' && data.notulen){
                     currentEditId = data.notulen.id;
                     document.getElementById('displayNotulenId').textContent = data.notulen.id;
