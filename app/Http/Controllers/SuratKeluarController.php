@@ -26,6 +26,8 @@ class SuratKeluarController extends Controller
         $start = @$request->get("start") ?? 0;
         $rowperpage = @$request->get("length") ?? 0;
         $search_arr = $request->get('search');
+        $startDate = @$request->get('startDate');
+        $endDate = @$request->get('endDate');
 
         $searchValue = @$search_arr['value'] ?? '';
         DB::statement('SET @row_number = ' . $start);
@@ -34,6 +36,9 @@ class SuratKeluarController extends Controller
             DB::raw('@row_number := @row_number + 1 AS row_id'),
             'surat_keluar.*'
         );
+        $surat_keluar->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('tanggal', [$startDate, $endDate]);
+        });
         $surat_keluar->when($searchValue != '', function ($query) use ($searchValue) {
             $query->where(function ($query) use ($searchValue) {
                 $query->orWhere('surat_keluar.no_agenda', 'like', '%' . $searchValue . '%');

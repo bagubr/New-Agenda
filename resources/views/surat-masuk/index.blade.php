@@ -30,6 +30,20 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <form id="filterForm" class="row g-2 mb-3 align-items-end">
+                            <div class="col-auto">
+                                <label for="startDate" class="form-label mb-0">Tanggal Agenda Dari</label>
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                            </div>
+                            <div class="col-auto">
+                                <label for="endDate" class="form-label mb-0">Sampai</label>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" id="filterBtn" class="btn btn-primary">Cari</button>
+                                <button type="button" id="resetBtn" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
                         <table id="dataTable" class="table table-bordered table-responsive">
                             <thead>
                                 <tr>
@@ -484,5 +498,17 @@
             }
         });
     }
+
+    // Filter functionality
+    document.getElementById('filterBtn').addEventListener('click', function(){
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        $('#dataTable').DataTable().ajax.url(`{{route('surat-masuk-data')}}?startDate=${startDate}&endDate=${endDate}`).load();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', function(){
+        document.getElementById('filterForm').reset();
+        $('#dataTable').DataTable().ajax.url(`{{route('surat-masuk-data')}}`).load();
+    });
 </script>
 @endpush
