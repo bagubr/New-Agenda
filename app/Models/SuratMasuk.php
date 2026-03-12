@@ -35,5 +35,10 @@ class SuratMasuk extends Model
     {
         return $this->hasMany(DispoMasuk::class, 'noagenda', 'no_agenda');
     }
+
+    public function arsipSurat()
+    {
+        return $this->hasMany(\App\Models\ArsipSurat::class, 'no_agenda', 'no_agenda');
+    }
     
 }

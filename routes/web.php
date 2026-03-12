@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\ArsipSuratController;
+use App\Http\Controllers\AsalController;
+use App\Http\Controllers\RuangRapatController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DispoKeluarController;
 use App\Http\Controllers\DispoMasukController;
@@ -17,6 +20,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::get('/profile', function () {return view('profile');})->name('profile');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
+    Route::post('/check-url', [HomeController::class, 'checkUrl'])->name('check-url');
     Route::get('/surat-masuk-edit/{surat_masuk}', [SuratMasukController::class, 'edit'])->name('surat-masuk.edit');
     Route::get('/surat-masuk', [SuratMasukController::class, 'index'])->name('surat-masuk');
     Route::get('/surat-masuk/create', [SuratMasukController::class, 'create'])->name('surat-masuk.create');
@@ -44,4 +48,25 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::delete('/surat-keluar-notulen-file-delete/{id}', [SuratKeluarController::class, 'notulenFileDelete'])->name('surat-keluar-notulen-file-delete');
     
     Route::delete('/dispo_keluar/{dispo_keluar}', [DispoKeluarController::class, 'delete'])->name('dispo-keluar-delete');
+    Route::delete('/delete-file/{id}', [SuratMasukController::class, 'deleteFile'])->name('delete-file');
+    Route::post('/upload-file', [SuratMasukController::class, 'uploadFile'])->name('upload-file');
+    // endpoint to fetch uploaded files for a specific surat masuk (used by index view)
+    Route::get('/surat-masuk-files/{id}', [SuratMasukController::class, 'files'])->name('surat-masuk-files');
+
+    Route::get('arsip-surat', [ArsipSuratController::class, 'index'])->name('arsip-surat');
+    Route::get('/arsip-surat/data', [ArsipSuratController::class, 'data'])->name('arsip-surat-data');
+    
+    Route::get('/asal', [AsalController::class, 'index'])->name('asal');
+    Route::get('/asal-create', [AsalController::class, 'create'])->name('asal.create');
+    Route::post('/asal', [AsalController::class, 'store'])->name('asal.post');
+    Route::get('/asal/edit/{id}', [AsalController::class, 'edit'])->name('asal.edit');
+    Route::put('/asal/update/{id}', [AsalController::class, 'update'])->name('asal.update');
+    Route::delete('/asal/delete/{id}', [AsalController::class, 'destroy'])->name('asal.destroy');
+
+    Route::get('/ruang-rapat', [RuangRapatController::class, 'index'])->name('ruang-rapat');
+    Route::get('/ruang-rapat/create', [RuangRapatController::class, 'create'])->name('ruang-rapat.create');
+    Route::post('/ruang-rapat', [RuangRapatController::class, 'store'])->name('ruang-rapat.post');
+    Route::get('/ruang-rapat/edit/{id}', [RuangRapatController::class, 'edit'])->name('ruang-rapat.edit');
+    Route::put('/ruang-rapat/update/{id}', [RuangRapatController::class, 'update'])->name('ruang-rapat.update');
+    Route::delete('/ruang-rapat/delete/{id}', [RuangRapatController::class, 'destroy'])->name('ruang-rapat.destroy');
 });

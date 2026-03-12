@@ -79,17 +79,17 @@
                                 </div>
                             </div>
                             <div class="mb-1">
-                                <label for="tmpt" class="form-label">Tempat Agenda / Undangan</label>
-                                <select name=tmpt id=tmpt class="form-control" >
+                                <label for="idruang" class="form-label">Tempat Agenda / Undangan</label>
+                                <select name=idruang id=idruang class="form-control" required>
                                     <option value="">.: Pilihan Ruang :.</option>
-                                    <option value="11" >R. Indraprastha</option>
-                                    <option value="12" >R. Vishwakarma</option>
-                                    <option value="13" >R. Mayasura</option>
-                                    <option value="14" >R. Yudhistira</option>
-                                    <option value="15" >R. Shield</option>
-                                    <option value="16" >R. Jakon</option>
-                                    <option value="99" >R. Lainnya</option>
-                                </select>
+                                    @foreach ($ruangrapat as $item)
+                                        <option value="{{$item->id}}">{{$item->ruangrapat}}</option>
+                                    @endforeach
+                                </select>    
+                            </div>
+                            <div class="mb-1 d-none" id="tmpt">
+                                <label for="tmpt">Lainnya</label>
+                                <input type="text" name="tmpt" class="form-control">
                             </div>
                             <div class="mb-1">
                                 <label for="acara" class="form-label">Acara</label>
@@ -104,7 +104,7 @@
                                 <select name="asal" id="asal" class="form-select mb-2 select2" required>
                                     <option value="">-- Pilih Asal --</option>
                                     @foreach ($asal as $item)
-                                        <option value="{{$item}}">{{$item}}</option>
+                                        <option value="{{$item->kode}}">{{$item->name}}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -178,6 +178,16 @@
             tags: true,
             width: 'resolve',
         });
+    });
+    $('#idruang').on('change', function() {
+        if(this.value === '99'){
+            $('#tmpt').removeClass('d-none');
+            $('#tmpt input').attr('required', true);
+        } else {
+            $('#tmpt').addClass('d-none');
+            $('#tmpt input').attr('required', false);
+            $('#tmpt input').val('');
+         }
     });
     
     $('#disposisi').on('change', function() {

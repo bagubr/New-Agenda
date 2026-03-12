@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ArsipSurat;
 use App\Models\DispoMasuk;
 use App\Models\Disposisi;
 use App\Models\NotulenFile;
@@ -331,5 +332,80 @@ class SuratMasukController extends Controller
         } catch (\Throwable $th) {
             return response()->json(['status' => 'error', 'message' => 'File gagal dihapus', 'error' => $th->getMessage()]);
         }
+    }
+
+    public function uploadFile(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif|max:10240',
+                'no_agenda' => 'sometimes|string',
+            ]);
+
+            if (!$request->hasFile('file')) {
+                return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan'], 400);
+            }
+
+            $file = $request->file('file');
+            $originalName = $file->getClientOriginalName();
+            $fileName = 'file_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('uploads', $fileName, 'public');
+
+            // Save file information to database
+            $arsip_surat = ArsipSurat::create([
+                'file' => $fileName,
+                'original_name' => $originalName,
+                'file_size' => $file->getSize(),
+                'file_type' => $file->getMimeType(),
+                'no_agenda' => $request->input('no_agenda'),
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'File berhasil diunggah',
+                'id' => $arsip_surat->id,
+                'filename' => $fileName,
+                'path' => $path,
+                'original_name' => $originalName,
+                'file_size' => $file->getSize()
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'File gagal diunggah: ' . $th->getMessage()
+            ], 422);
+        }
+    }
+
+    public function deleteFile($id)
+    {
+        try {
+            $arsip_surat = ArsipSurat::find($id);
+            
+            if(!$arsip_surat){
+                return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan']);
+            }
+
+            // Delete file from storage
+            if($arsip_surat->file && Storage::disk('public')->exists('uploads/' . $arsip_surat->file)){
+                Storage::disk('public')->delete('uploads/' . $arsip_surat->file);
+            }
+
+            // Delete record from database
+            $arsip_surat->delete();
+
+            return response()->json(['status' => 'success', 'message' => 'File berhasil dihapus']);
+        } catch (\Throwable $th) {
+            return response()->json(['status' => 'error', 'message' => 'File gagal dihapus', 'error' => $th->getMessage()]);
+        }
+    }
+
+    /**
+     * Return JSON list of arsip files for a given surat masuk id
+     */
+    public function files($id)
+    {
+        $files = ArsipSurat::where('no_agenda', $id)->get();
+        return response()->json(['status' => 'success', 'files' => $files]);
     }
 }

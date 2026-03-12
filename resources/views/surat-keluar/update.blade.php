@@ -84,7 +84,12 @@
                             </div>
                             <div class="mb-1">
                                 <label for="asal" class="form-label">Asal</label>
-                                <input type="text" name="asal" class="form-control" id="asal" required value="{{$surat_keluar->asal}}"/>
+                                <select name="asal" id="asal" class="form-control select2" required>
+                                    <option value="">Pilih Asal Surat</option>
+                                    @foreach($asal as $data)
+                                        <option value="{{$data->id}}" {{($surat_keluar->asal == $data->kode)?'selected':''}}>{{$data->name}}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="mb-1">
                                 <label for="penandatangan" class="form-label">Penandatangan</label>
@@ -98,33 +103,6 @@
                             <div class="mb-1">
                                 <label for="publish" class="form-label">Publish ke Tvtrone ?</label>
                                 <input type="checkbox" class="form-check-input" id="publish" name="publish" value="1" {{($surat_keluar->publish == "1")?'checked':''}}/>
-                            </div>
-                            <div class="card p-2 mb-1">
-                                @foreach ($surat_keluar->disposisi as $key => $item)
-                                <br>
-                                {{$item->disposisi_name}}
-                                <input type="hidden" name="disposisi[]" class="form-control m-1" value="{{$item->disposisi}}"/>
-                                <div class="input-group">
-                                    <input type="text" name="ket[]" class="form-control" value="{{$item->ket}}"/>
-                                    <input type="hidden" name="id[]" class="form-control" value="{{$item->id}}"/>
-                                    <div class="input-group-prepend">
-                                        <div class="input-group-text bg-danger">
-                                            <a class="" onclick="deleteDispo({{ $item->id }}, '{{ route('dispo-keluar-delete', $item->id) }}')"><i class="bi bi-trash" style="color: white;"></i></a>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                @endforeach
-                                <br>
-                                <label for="disposisi" class="form-label"><b>Disposisi</b></label>
-                                <select  class="form-control" id="disposisi" name="disposisi[]" multiple>
-                                    @foreach ($disposisi as $item)
-                                        <option value="{{sprintf('%02d',  $item->id)}}" class="options">{{$item->disposisi}}</option>
-                                    @endforeach
-                                </select>
-                                <div class="m-1" id="disposisi_ket">
-    
-                                </div>
                             </div>
                         </div>
                         <!--end::Body-->

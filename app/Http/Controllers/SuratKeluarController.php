@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asal;
 use App\Models\DispoKeluar;
 use App\Models\Disposisi;
 use App\Models\NotulenFile;
-use App\Models\NotulenKeluar;
+use App\Models\RuangRapat;
 use App\Models\SuratKeluar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -71,15 +72,17 @@ class SuratKeluarController extends Controller
         $lastNoAgenda = SuratKeluar::orderBy('no_agenda', 'desc')->first();
         $no_agenda = $lastNoAgenda ? $lastNoAgenda->no_agenda + 1 : 1;
         $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->get();
-        $asal = Disposisi::groupBy('disposisi')->orderBy('id')->get()->pluck('disposisi', 'disposisi')->unique();
+        $ruangrapat = RuangRapat::orderBy('id')->get();
+        $asal = Asal::orderBy('id')->get();
         $penandatangan = DB::table('surat_keluar')->select('penandatangan')->orderBy('penandatangan')->get()->pluck('penandatangan', 'penandatangan')->unique();
-        return view('surat-keluar.create', compact('disposisi', 'no_agenda', 'asal', 'penandatangan'));
+        return view('surat-keluar.create', compact('disposisi', 'no_agenda', 'asal', 'penandatangan', 'ruangrapat'));
     }
 
     public function edit(SuratKeluar $surat_keluar)
     {
         $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->get();
-        return view('surat-keluar.update', compact('disposisi', 'surat_keluar'));
+        $asal = Asal::orderBy('id')->get();
+        return view('surat-keluar.update', compact('disposisi', 'surat_keluar', 'asal'));
     }
 
     public function post(Request $request)
@@ -93,6 +96,7 @@ class SuratKeluarController extends Controller
             'tmpt'          => 'required',
             'acara'         => 'required',
             'no_surat'      => 'required|unique:surat_keluar,no_surat',
+            'idruang'       => 'sometimes|exists:ruangrapat,id',
             'asal'          => 'required',
             'tujuan'        => 'sometimes',
             'publish'       => 'sometimes',
@@ -146,7 +150,9 @@ class SuratKeluarController extends Controller
             'tmpt'          => 'required',
             'acara'         => 'required',
             'no_surat'      => 'required',
+            'idruang'       => 'sometimes|exists:ruangrapat,id',
             'asal'          => 'required',
+            'tujuan'        => 'required',
             'penandatangan' => 'sometimes',
             'publish'       => 'sometimes',
             'note'          => 'sometimes'
@@ -201,138 +207,5 @@ class SuratKeluarController extends Controller
             return redirect()->back()->with('error', 'Data gagal di hapus');
         }
         return redirect()->back()->with('success', 'Data berhasil di hapus');
-    }
-
-    public function notulen(Request $request, $no_agenda)
-    {
-        try {
-            $data = $request->validate([
-                'notulen'       => 'required|string',
-                'file_dokument' => 'required|file|mimes:pdf,doc,docx|max:2048',
-                'files'          => 'sometimes|array',
-                'files.*'        => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
-            ]);
-            $filename = 'notulen_' . $no_agenda . '_' . time() . '.' . $request->file('file_dokument')->getClientOriginalExtension();
-            $request->file('file_dokument')->storeAs('notulen_keluar', $filename, 'public');
-            $original_name = $request->file('file_dokument')->getClientOriginalName();
-            $surat_keluar = SuratKeluar::where('no_agenda', $no_agenda)->first();
-            $notulen_keluar = NotulenKeluar::create([
-                'periode'       => env('APP_PERIODE'),
-                'noagenda'      => $no_agenda,
-                'filename'      => $filename,
-                'original_name' => $original_name,
-                'note'          => $request->notulen,
-                'user'          => Auth::user()->username,
-            ]);
-            foreach ($data['files'] ?? [] as $key => $value) {
-                $file = 'notulen_file_' . $no_agenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
-                $value->storeAs('notulen_files', $file, 'public');
-                NotulenFile::create([
-                    'notulen_id'        => $notulen_keluar->id,
-                    'file'              => $file,
-                    'jenis'             => 'OUT',
-                    'original_name'     => $value->getClientOriginalName(),
-                ]);
-            }
-            
-        } catch (\Throwable $th) {
-            return response()->json(['status' => 'error', 'message' => 'Notulen gagal diambil', 'error' => $th->getMessage()]);
-        }
-        return response()->json(['status' => 'success', 'message' => 'Notulen berhasil diambil', 'no_agenda' => $no_agenda]);
-        
-    }
-
-    public function notulenData($no_agenda)
-    {
-        try {
-            $notulen_keluar = NotulenKeluar::where('noagenda', $no_agenda)->first();
-            
-            if(!$notulen_keluar){
-                return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan']);
-            }
-
-            $notulen_keluar->files = NotulenFile::whereJenis('OUT')->where('notulen_id', $notulen_keluar->id)->get();
-            
-            return response()->json(['status' => 'success', 'notulen' => $notulen_keluar]);
-        } catch (\Throwable $th) {
-            return response()->json(['status' => 'error', 'message' => 'Gagal mengambil data', 'error' => $th->getMessage()]);
-        }
-    }
-
-    public function notulenUpdate(Request $request, $id)
-    {
-        try {
-            $notulen_keluar = NotulenKeluar::find($id);
-            
-            if(!$notulen_keluar){
-                return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan']);
-            }
-
-            $data = $request->validate([
-                'notulen'       => 'required|string',
-                'file_dokument' => 'sometimes|file|mimes:pdf,doc,docx|max:2048',
-                'files'         => 'sometimes|array',
-                'files.*'       => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
-            ]);
-
-            // Update note
-            $notulen_keluar->note = $data['notulen'];
-
-            // Update file_dokument if provided
-            if($request->hasFile('file_dokument')){
-                // Delete old file if exists
-                if($notulen_keluar->filename && Storage::disk('public')->exists('notulen_keluar/' . $notulen_keluar->filename)){
-                    Storage::disk('public')->delete('notulen_keluar/' . $notulen_keluar->filename);
-                }
-                
-                $filename = 'notulen_' . $notulen_keluar->noagenda . '_' . time() . '.' . $request->file('file_dokument')->getClientOriginalExtension();
-                $request->file('file_dokument')->storeAs('notulen_keluar', $filename, 'public');
-                $notulen_keluar->filename = $filename;
-                $notulen_keluar->original_name = $request->file('file_dokument')->getClientOriginalName();
-            }
-
-            $notulen_keluar->save();
-
-            // Add new files if provided
-            if(!empty($data['files'])){
-                foreach ($data['files'] as $key => $value) {
-                    $file = 'notulen_file_' . $notulen_keluar->noagenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
-                    $value->storeAs('notulen_files', $file, 'public');
-                    NotulenFile::create([
-                        'notulen_id' => $notulen_keluar->id,
-                        'file'              => $file,
-                        'jenis'             => 'OUT',
-                        'original_name'     => $value->getClientOriginalName(),
-                    ]);
-                }
-            }
-
-            return response()->json(['status' => 'success', 'message' => 'Notulen berhasil diperbarui']);
-        } catch (\Throwable $th) {
-            return response()->json(['status' => 'error', 'message' => 'Notulen gagal diperbarui', 'error' => $th->getMessage()]);
-        }
-    }
-
-    public function notulenFileDelete($id)
-    {
-        try {
-            $notulen_file = NotulenFile::find($id);
-            
-            if(!$notulen_file){
-                return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan']);
-            }
-
-            // Delete file from storage
-            if($notulen_file->file && Storage::disk('public')->exists('notulen_files/' . $notulen_file->file)){
-                Storage::disk('public')->delete('notulen_files/' . $notulen_file->file);
-            }
-
-            // Delete record from database
-            $notulen_file->delete();
-
-            return response()->json(['status' => 'success', 'message' => 'File berhasil dihapus']);
-        } catch (\Throwable $th) {
-            return response()->json(['status' => 'error', 'message' => 'File gagal dihapus', 'error' => $th->getMessage()]);
-        }
     }
 }

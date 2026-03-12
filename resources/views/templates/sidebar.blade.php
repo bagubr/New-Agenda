@@ -21,7 +21,7 @@
                         </p>
                     </a>
                 </li>
-                <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-inboxes"></i>
+                <li class="nav-item"> <a href="{{route('arsip-surat')}}" class="nav-link {{Request::routeIs('arsip-surat')?'active':''}}"> <i class="nav-icon bi bi-inboxes"></i>
                         <p>
                             Arsip Surat
                         </p>
@@ -44,6 +44,25 @@
                             Laporan Bulanan / Tahunan
                         </p>
                     </a>
+                </li>
+                <li class="nav-item {{Request::routeIs('asal', 'ruang-rapat')?'menu-open':''}}"> <a href="#" class="nav-link {{Request::routeIs('asal')?'active':''}}"> <i class="nav-icon bi bi-gear"></i>
+                        <p>
+                            Pengaturan
+                            <i class="nav-arrow bi bi-chevron-right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"> <a href="{{route('asal')}}" class="nav-link {{Request::routeIs('asal')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
+                                <p>Asal</p>
+                            </a> 
+                        </li>
+                    </ul>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"> <a href="{{route('ruang-rapat')}}" class="nav-link {{Request::routeIs('ruang-rapat')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
+                                <p>Ruang Rapat</p>
+                            </a> 
+                        </li>
+                    </ul>
                 </li>
             </ul> <!--end::Sidebar Menu-->
         </nav>
