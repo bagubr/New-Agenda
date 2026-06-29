@@ -22,14 +22,17 @@ class AuthController extends Controller
         ];
 
         if(Auth::attempt($credentials)){
+            Auth::login(Auth::user());
             return redirect()->route('dashboard')->with('success', 'Berhasil Login');
         }else{
             return redirect()->back()->with('error', 'Login Gagal Username atau Password Salah');
         }
     }
 
-    public function logout() {
+    public function logout(Request $request) {
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect()->route('login')->with('success', 'Logout Berhasil');
     }
 

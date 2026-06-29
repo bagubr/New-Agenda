@@ -51,6 +51,9 @@ class SuratKeluarController extends Controller
                 $query->orWhere('surat_keluar.acara', 'like', '%' . $searchValue . '%');
             });
         });
+        if (Auth::user()->role != 'superadmin' && Auth::user()->role != 'kepala_dinas') {
+            $surat_keluar->where('asal', Auth::user()->devisi);
+        }
 
         $totalRecords = $surat_keluar->count();
 

@@ -50,9 +50,9 @@
                                     <th>No</th>
                                     <th>Jenis</th>
                                     <th>Agenda</th>
-                                    <th>Tanggal</th>
-                                    <th>Agenda</th>
-                                    <th>Nomor</th>
+                                    <th>Tempat dan Waktu</th>
+                                    <th>Nomor Surat</th>
+                                    <th>Tanggal Surat</th>
                                     <th>Asal</th>
                                 </tr>
                             </thead>
@@ -166,19 +166,6 @@
                     data: 'no_agenda'
                 },
                 {
-                    data: 'tanggal',
-                    render: function(data, type, row) {
-                        const date = new Date(data);
-                        const formatted = date.toLocaleDateString("id-ID", {
-                            weekday: "long",
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric"
-                        });
-                        return formatted;
-                    }
-                },
-                {
                     data: 'tgl_agenda',
                     render: function(data, type, row) {
                         const date = new Date(row.tgl_agenda);
@@ -193,6 +180,19 @@
                 },
                 {
                     data: 'no_surat'
+                },
+                {
+                    data: 'tanggal',
+                    render: function(data, type, row) {
+                        const date = new Date(data);
+                        const formatted = date.toLocaleDateString("id-ID", {
+                            weekday: "long",
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric"
+                        });
+                        return formatted;
+                    }
                 },
                 {
                     data: 'asal'

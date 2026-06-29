@@ -1,7 +1,7 @@
 @extends('templates.dashboard-layout')
 @push('css')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-5-theme/1.3.0/select2-bootstrap-5-theme.min.css" />
 @endpush
 @section('content')
 
@@ -34,7 +34,7 @@
                         <h3 class="card-title">Tambah</h3>
                     </div>
                     <!--begin::Form-->
-                    <form action="{{route('surat-masuk.update', $surat_masuk->no_agenda)}}" method="POST">
+                    <form action="{{route('surat-masuk.update', $surat_masuk->id)}}" method="POST">
                         @method('PUT')
                         @csrf
                         <!--begin::Body-->
@@ -46,6 +46,8 @@
                                 <label class="form-check-label" for="undangan">Undangan</label>
                                 <input type="radio" class="form-check-input" id="nonundangan" name="jns" value="2" {{($surat_masuk->jns == "2")?'checked':''}} required />
                                 <label class="form-check-label" for="nonundangan">Non Undangan</label>
+                                <input type="radio" class="form-check-input" id="nonundangan" name="jns" value="3" {{($surat_masuk->jns == "3")?'checked':''}} required />
+                                <label class="form-check-label" for="nonundangan">Usulan Pembangunan</label>
                             </div>
                             <div class="mb-1">
                                 <label for="no_agenda" class="form-label">No Agenda</label>
@@ -96,27 +98,41 @@
                                 <textarea name="note" class="form-control" style="width: 100%; height:150px;" id="note" required>@if (isset($surat_masuk->note)){!!$surat_masuk->note!!}@else<p></p>@endif
                                 </textarea>
                             </div>
-                            <div class="mb-1">
-                                <label for="publish" class="form-label">Publish ke Tvtrone ?</label>
-                                <input type="checkbox" class="form-check-input" id="publish" name="publish" value="1" {{($surat_masuk->publish == "1")?'checked':''}} />
-                            </div>
                             <div class="card p-2 mb-1">
                                 @foreach ($surat_masuk->dispomasuk as $key => $item)
                                 <br>
+                                @if(Auth::user()->devisi == $item->dispo->devisi || Auth::user()->role === 'superadmin' || Auth::user()->role === 'kepala_dinas')
                                 {{$item->disposisi_name}}
                                 <input type="hidden" name="disposisi[]" class="form-control m-1" value="{{$item->disposisi}}" />
                                 <div class="input-group">
+                                    <select name="tindak[{{$item->id}}][]" class="form-control selectdisposisi" data-id="{{$item->dispo->id}}" multiple>
+                                        <option value="">Pilih Tindak Lanjut</option>
+                                        @if ($item->tindak && is_array(json_decode($item->tindak)))
+                                        @foreach (json_decode($item->tindak) as $tindak)
+                                        <option value="{{$tindak}}" selected>{{$tindak}}</option>
+                                        @endforeach
+                                        @elseif($item->tindak)
+                                        <option value="{{$item->tindak}}" selected>{{$item->tindak}}</option>
+                                        @endif
+                                    </select>
                                     <input type="text" name="ket[]" class="form-control" value="{{$item->ket}}" />
                                     <input type="hidden" name="id[]" class="form-control" value="{{$item->id}}" />
-                                    <div class="input-group-prepend">
+                                    <div class="input-group-prepend d-inline-flex">
+                                        @if (Auth::user()->role === 'superadmin' || Auth::user()->role === 'kepala_dinas')
                                         <div class="input-group-text bg-danger">
                                             <a class="" onclick="deleteDispo({{ $item->id }}, '{{ route('dispo-masuk-delete', $item->id) }}')"><i class="bi bi-trash" style="color: white;"></i></a>
                                         </div>
+                                        <div class="input-group-text bg-primary">
+                                            <a class="" onclick="printDispo({{ $item->id }}, '{{ route('cetak-dispo', $item->id) }}')"><i class="bi bi-download" style="color: white;"></i></a>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
+                                @endif
 
                                 @endforeach
                                 <br>
+                                @if (Auth::user()->role === 'superadmin' || Auth::user()->role === 'kepala_dinas')
                                 <label for="disposisi" class="form-label"><b>Disposisi</b></label>
                                 <select class="form-control" id="disposisi" name="disposisi[]" multiple>
                                     @foreach ($disposisi as $item)
@@ -126,6 +142,7 @@
                                 <div class="m-1" id="disposisi_ket">
 
                                 </div>
+                                @endif
                             </div>
                         </div>
                         <!--end::Body-->
@@ -186,20 +203,112 @@
             }
         });
     }
+
+    function printDispo(id, url) {
+        Swal.fire({
+            title: 'Yakin?',
+            text: 'Data disposisi akan dicetak.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, cetak!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var form = document.createElement('form');
+                form.action = url;
+                var token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '_token';
+                token.value = '{{ csrf_token() }}';
+                form.appendChild(token);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
     $(document).ready(function(e) {
-        $('#disposisi').select2();
+        $('#disposisi').select2({
+            width: 'resolve',
+        });
     });
+
     $('#disposisi').on('change', function() {
         $('#disposisi_ket').empty();
         var html = '<b>Keterangan</b> <br>';
         $(this).find('option:selected').each(function() {
-            // var value = $(this).val();
             var value = $(this).text();
+            var id = $(this).val();
             html += value;
+            html += '<div class="input-group">';
+            html += '<input type="hidden" name="id[]" class="form-control" value="'+id+'" />';
+            html += '<select name="tindak['+id+'][]" value="'+id+'" class="form-control selectdisposisi" data-id="' + id + '" multiple>'
+            html += '<option value="">Pilih Tindak Lanjut</option>'
+            html += '</select>'
             html += '<input type="text" name="ket[]" class="form-control m-1" id="ket' + this.value + '"/>'
+            html += '</div>'
         });
-        // console.log(value);
         $('#disposisi_ket').html(html);
+        // Initialize select2 on dynamically created .selectdisposisi elements
+        $('#disposisi_ket').find('.selectdisposisi').each(function() {
+            var $el = $(this);
+            console.log($el.data('id'));
+            // destroy previous select2 if present to avoid dup errors
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
+            }
+            $el.select2({
+                tags: true,
+                width: 'resolve',
+                theme: 'bootstrap-5',
+                containerCssClass: ':all:',
+                ajax: {
+                    url: "{{ url('/pilih-user-data/') }}" + '/' + $el.data('id'),
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 300,
+                    processResults: function(params) {
+                        return {
+                            results: $.map(params.data, function(item) {
+                                return {
+                                    text: item.nama,
+                                    id: item.nama
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+    });
+    $('.selectdisposisi').each(function() {
+        var $el = $(this);
+        $el.select2({
+            tags: true,
+            width: 'resolve',
+            theme: 'bootstrap-5',
+            containerCssClass: ':all:',
+            ajax: {
+                url: "{{ url('/pilih-user-data/') }}" + '/' + $el.data('id'),
+                dataType: 'json',
+                type: 'GET',
+                delay: 300,
+                processResults: function(params) {
+                    return {
+                        results: $.map(params.data, function(item) {
+                            return {
+                                text: item.nama,
+                                id: item.nama
+                            }
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
     });
 </script>
 @endpush

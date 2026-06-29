@@ -15,6 +15,19 @@
                         </p>
                     </a>
                 </li>
+                <li class="nav-item"> <a href="{{route('belum-disposisi')}}" class="nav-link {{Request::routeIs('belum-disposisi')?'active':''}}"> <i class="nav-icon bi bi-pencil-square"></i>
+                        <p>
+                            Belum Disposisi
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item"> <a href="{{route('surat-terlewat')}}" class="nav-link {{Request::routeIs('surat-terlewat')?'active':''}}"> <i class="nav-icon bi bi-exclamation-triangle-fill"></i>
+                        <p>
+                            Surat Terlewat
+                        </p>
+                    </a>
+                </li>
+                @if(auth()->user()->role !== 'user')
                 <li class="nav-item"> <a href="{{route('surat-keluar')}}" class="nav-link {{Request::routeIs('surat-keluar')?'active':''}}"> <i class="nav-icon bi bi-send"></i>
                         <p>
                             Surat Keluar
@@ -27,43 +40,53 @@
                         </p>
                     </a>
                 </li>
-                <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-pencil-square"></i>
+                <!-- <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-pencil-square"></i>
                         <p>
                             Buat Surat Baru
                         </p>
                     </a>
-                </li>
-                <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-tag"></i>
-                        <p>
-                            Disposisi
-                        </p>
-                    </a>
-                </li>
+                </li> -->
                 <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-bar-chart"></i>
                         <p>
                             Laporan Bulanan / Tahunan
                         </p>
                     </a>
                 </li>
-                <li class="nav-item {{Request::routeIs('asal', 'ruang-rapat')?'menu-open':''}}"> <a href="#" class="nav-link {{Request::routeIs('asal')?'active':''}}"> <i class="nav-icon bi bi-gear"></i>
-                        <p>
-                            Pengaturan
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item"> <a href="{{route('asal')}}" class="nav-link {{Request::routeIs('asal')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
-                                <p>Asal</p>
-                            </a> 
-                        </li>
-                    </ul>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item"> <a href="{{route('ruang-rapat')}}" class="nav-link {{Request::routeIs('ruang-rapat')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
-                                <p>Ruang Rapat</p>
-                            </a> 
-                        </li>
-                    </ul>
-                </li>
+                @if (Auth::user()->role === 'admin')
+                    
+                    <li class="nav-item {{Request::routeIs('asal', 'ruang-rapat')?'menu-open':''}}"> <a href="#" class="nav-link {{Request::routeIs('asal')?'active':''}}"> <i class="nav-icon bi bi-gear"></i>
+                            <p>
+                                Pengaturan
+                                <i class="nav-arrow bi bi-chevron-right"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"> <a href="{{route('asal')}}" class="nav-link {{Request::routeIs('asal')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
+                                    <p>Asal</p>
+                                </a> 
+                            </li>
+                        </ul>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"> <a href="{{route('ruang-rapat')}}" class="nav-link {{Request::routeIs('ruang-rapat')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
+                                    <p>Ruang Rapat</p>
+                                </a> 
+                            </li>
+                        </ul>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"> <a href="{{route('users.index')}}" class="nav-link {{Request::routeIs('users.*')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
+                                    <p>Manajemen User</p>
+                                </a> 
+                            </li>
+                        </ul>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"> <a href="{{route('disposisi.index')}}" class="nav-link {{Request::routeIs('disposisi.*')?'active':''}}"> <i class="nav-icon bi bi-circle"></i>
+                                    <p>Disposisi</p>
+                                </a> 
+                            </li>
+                        </ul>
+                    </li>
+                @endif
+                @endif
             </ul> <!--end::Sidebar Menu-->
         </nav>
     </div> <!--end::Sidebar Wrapper-->

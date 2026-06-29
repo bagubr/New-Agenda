@@ -17,8 +17,17 @@ class SuratMasukController extends Controller
 {
     public function index(Request $request)
     {
-        $data['surat_masuk'] = SuratMasuk::orderBy('no_agenda', 'desc')->get();
-        return view('surat-masuk.index', compact('data'));
+        return view('surat-masuk.index');
+    }
+
+    public function disposisi(Request $request)
+    {
+        return view('surat-masuk.disposisi');
+    }
+
+    public function terlewat(Request $request)
+    {
+        return view('surat-masuk.terlewat');
     }
 
     public function data(Request $request)
@@ -40,6 +49,15 @@ class SuratMasukController extends Controller
         $surat_masuk->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('tanggal', [$startDate, $endDate]);
         });
+        if (Auth::user()->role != 'superadmin' && Auth::user()->role != 'kepala_dinas') {
+            $surat_masuk->has('dispomasuk');
+            $surat_masuk->whereHas('dispomasuk.dispo', function ($query) {
+                if (Auth::user()->role != 'admin') {
+                    $query->where('role', Auth::user()->role);
+                }
+                $query->where('devisi', Auth::user()->devisi);
+            });
+        }
         $surat_masuk->when($searchValue != '', function ($query) use ($searchValue) {
             $query->where(function ($query) use ($searchValue) {
                 $query->orWhere('surat_masuk.no_agenda', 'like', '%' . $searchValue . '%');
@@ -67,42 +85,196 @@ class SuratMasukController extends Controller
         echo json_encode($response);
     }
 
+    public function data_disposisi(Request $request)
+    {
+
+        $draw = $request->get('draw');
+        $start = @$request->get("start") ?? 0;
+        $rowperpage = @$request->get("length") ?? 10;
+        $search_arr = $request->get('search');
+        $startDate = @$request->get('startDate');
+        $endDate = @$request->get('endDate');
+
+        $searchValue = @$search_arr['value'] ?? '';
+        DB::statement('SET @row_number = ' . $start);
+        $surat_masuk = SuratMasuk::query();
+        $surat_masuk->join('dispo_masuk', 'surat_masuk.no_agenda', '=', 'dispo_masuk.noagenda')
+            ->join('disposisi', 'disposisi.id', '=', 'dispo_masuk.disposisi');
+        if (Auth::user()->role != 'superadmin') {
+                if (Auth::user()->role != 'admin') {
+                    $surat_masuk->where('disposisi.role', Auth::user()->role);
+                }
+                $surat_masuk->where('devisi', Auth::user()->devisi);
+        }
+        $surat_masuk->where('jns', 1);
+        $surat_masuk->select(
+            DB::raw('@row_number := @row_number + 1 AS row_id'),
+            'surat_masuk.id as id',
+            'surat_masuk.no_agenda',
+            'surat_masuk.tanggal',
+            'surat_masuk.no_surat',
+            'surat_masuk.asal',
+            'surat_masuk.perihal',
+            'surat_masuk.perihal',
+            'surat_masuk.penerima',
+            'surat_masuk.time',
+            'surat_masuk.user',
+            'surat_masuk.periode',
+            'surat_masuk.jns',
+            'surat_masuk.tgl_agenda',
+            'surat_masuk.tmpt',
+            'surat_masuk.jam',
+            'surat_masuk.acara',
+            'surat_masuk.note',
+            'disposisi.role',
+            'disposisi.devisi',
+        );
+        $surat_masuk->whereHas('dispomasuk', function ($query) {
+            $query->whereNull('tindak')->orWhere('tindak', '');
+        })->whereHas('dispomasuk', function ($query) {
+            $query->whereNull('ket')->orWhere('ket', '');
+        });
+        $surat_masuk->when($searchValue != '', function ($query) use ($searchValue) {
+            $query->where(function ($query) use ($searchValue) {
+                $query->orWhere('surat_masuk.no_agenda', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.asal', 'like', '%' . $searchValue . '%');
+                $query->orWhereDate('surat_masuk.no_surat', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.perihal', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.tmpt', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.jam', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.acara', 'like', '%' . $searchValue . '%');
+            });
+        });
+
+        $totalRecords = $surat_masuk->count();
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecords,
+            "iTotalDisplayRecords" => $totalRecords,
+            "aaData" => $surat_masuk->skip($start)
+                ->take($rowperpage)
+                ->orderBy('row_id')
+                ->groupBy('id', 'no_agenda')
+                ->get(),
+        );
+        echo json_encode($response);
+    }
+
+    public function data_terlewat(Request $request)
+    {
+
+        $draw = $request->get('draw');
+        $start = @$request->get("start") ?? 0;
+        $rowperpage = @$request->get("length") ?? 10;
+        $search_arr = $request->get('search');
+        $startDate = @$request->get('startDate');
+        $endDate = @$request->get('endDate');
+
+        $searchValue = @$search_arr['value'] ?? '';
+        DB::statement('SET @row_number = ' . $start);
+        $surat_masuk = SuratMasuk::query();
+        $surat_masuk->join('dispo_masuk', 'surat_masuk.no_agenda', '=', 'dispo_masuk.noagenda')
+            ->join('disposisi', 'disposisi.id', '=', 'dispo_masuk.disposisi');
+        if (Auth::user()->role != 'superadmin') {
+                if (Auth::user()->role != 'admin') {
+                    $surat_masuk->where('disposisi.role', Auth::user()->role);
+                }
+                $surat_masuk->where('devisi', Auth::user()->devisi);
+        }
+        $surat_masuk->where('jns', 1);
+        $surat_masuk->select(
+            DB::raw('@row_number := @row_number + 1 AS row_id'),
+            'surat_masuk.id as id',
+            'surat_masuk.no_agenda',
+            'surat_masuk.tanggal',
+            'surat_masuk.no_surat',
+            'surat_masuk.asal',
+            'surat_masuk.perihal',
+            'surat_masuk.perihal',
+            'surat_masuk.penerima',
+            'surat_masuk.time',
+            'surat_masuk.user',
+            'surat_masuk.periode',
+            'surat_masuk.jns',
+            'surat_masuk.tgl_agenda',
+            'surat_masuk.tmpt',
+            'surat_masuk.jam',
+            'surat_masuk.acara',
+            'surat_masuk.note',
+            'disposisi.role',
+            'disposisi.devisi',
+        );
+        $surat_masuk->whereHas('dispomasuk', function ($query) {
+            $query->whereNull('tindak')->orWhere('tindak', '');
+        })->whereHas('dispomasuk', function ($query) {
+            $query->whereNull('ket')->orWhere('ket', '');
+        });
+        $surat_masuk->whereDate('tgl_agenda', '<', date('Y-m-d'));
+        $surat_masuk->when($searchValue != '', function ($query) use ($searchValue) {
+            $query->where(function ($query) use ($searchValue) {
+                $query->orWhere('surat_masuk.no_agenda', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.asal', 'like', '%' . $searchValue . '%');
+                $query->orWhereDate('surat_masuk.no_surat', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.perihal', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.tmpt', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.jam', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.acara', 'like', '%' . $searchValue . '%');
+            });
+        });
+
+        $totalRecords = $surat_masuk->count();
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecords,
+            "iTotalDisplayRecords" => $totalRecords,
+            "aaData" => $surat_masuk->skip($start)
+                ->take($rowperpage)
+                ->orderBy('row_id')
+                ->groupBy('id', 'no_agenda')
+                ->get(),
+        );
+        echo json_encode($response);
+    }
+
     public function create()
     {
-        $no_agenda = SuratMasuk::orderBy('no_agenda', 'desc')->first()->no_agenda + 1;
-        $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->get();
+        $no_agenda = @SuratMasuk::where('periode', date('Y'))->orderBy('no_agenda', 'desc')->first()->no_agenda ?? 0;
+        $no_agenda = str_pad($no_agenda + 1, 5, '0', STR_PAD_LEFT) . '/' . date('m') . '/' . date('Y');
+        $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->where('aktif', 1)->get();
         $asal = DB::table('surat_masuk')->select('asal')->orderBy('asal')->get()->pluck('asal', 'asal')->unique();
         return view('surat-masuk.create', compact('disposisi', 'no_agenda', 'asal'));
     }
 
     public function edit(SuratMasuk $surat_masuk)
     {
-        $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->get();
+        $disposisi = Disposisi::groupBy('disposisi')->where('aktif', 1)->orderBy('id')->get();
         return view('surat-masuk.update', compact('disposisi', 'surat_masuk'));
     }
 
     public function post(Request $request)
     {
         $data = $request->validate([
-            'jns'           => 'required',
+            'jns'           => 'sometimes',
             'perihal'       => 'required',
-            'tanggal'       => 'required',
+            'tanggal'       => 'sometimes',
             'tgl_agenda'    => 'sometimes',
             'jam'           => 'sometimes',
             'tmpt'          => 'required',
             'acara'         => 'required',
             'no_surat'      => 'required|unique:surat_masuk,no_surat',
             'asal'          => 'required',
-            'penerima'      => 'required',
-            'publish'       => 'sometimes',
+            // 'penerima'      => 'required',
             'note'          => 'sometimes'
         ]);
-        try {
-            DB::beginTransaction();
+        $data['penerima'] = Auth::user()->username;
+        // try {
+        //     DB::beginTransaction();
             $data['no_agenda'] = SuratMasuk::orderBy('no_agenda', 'desc')->first()->no_agenda + 1;
             $data['f_umum'] = 1;
             $data['user'] = Auth::user()->username;
-            $data['periode'] = env('APP_PERIODE');
+            $data['periode'] = date('Y');
 
             SuratMasuk::create($data);
             if ($request->disposisi) {
@@ -110,26 +282,29 @@ class SuratMasukController extends Controller
                     'disposisi'     => 'required|array',
                     'disposisi.*'   => 'required|exists:disposisi,id',
                     'ket'           => 'sometimes|array',
-                    'ket.*'         => 'sometimes|string',
+                    'ket.*'         => 'sometimes',
+                    'tindak'         => 'sometimes|array',
+                    'tindak.*'       => 'sometimes',
                 ]);
                 foreach ($disposisi['disposisi'] as $key => $value) {
                     $dispomasuk = [
-                        'periode'   => env('APP_PERIODE'),
+                        'periode'   => date('Y'),
                         'noagenda'  => $data['no_agenda'],
                         'nomor'     => $data['no_surat'],
                         'disposisi' => $value,
                         'role'      => Auth::user()->role,
                         'user'      => Auth::user()->username,
-                        'ket'       => $disposisi['ket'][$key]
+                        'ket'       => $disposisi['ket'][$key],
+                        'tindak'    => $disposisi['tindak'][$key],
                     ];
                     DispoMasuk::create($dispomasuk);
                 }
             }
-            DB::commit();
-        } catch (\Throwable $th) {
-            DB::rollback();
-            return response()->json(['status' => 'error', 'message' => 'gagal disimpan', 'error' => $th->getMessage()]);
-        }
+            // DB::commit();
+        // } catch (\Throwable $th) {
+        //     DB::rollback();
+        //     return response()->json(['status' => 'error', 'message' => 'gagal disimpan', 'error' => $th->getMessage()]);
+        // }
         return response()->json(['status' => 'success', 'message' => 'berhasil disimpan']);
     }
 
@@ -146,12 +321,9 @@ class SuratMasukController extends Controller
             'no_surat'      => 'required',
             'asal'          => 'required',
             'penerima'      => 'required',
-            'publish'       => 'sometimes',
-            'note'          => 'sometimes'
+            'note'          => 'sometimes',
         ]);
-        if (!isset($data['publish'])) {
-            $data['publish'] = '0';
-        }
+        // dd($data);
         try {
             DB::beginTransaction();
             $surat_masuk->update($data);
@@ -163,24 +335,34 @@ class SuratMasukController extends Controller
                     'ket.*'         => 'sometimes',
                     'id'            => 'sometimes|array',
                     'id.*'          => 'sometimes|string',
+                    'tindak'         => 'sometimes|array',
+                    'tindak.*'       => 'sometimes',
+
                 ]);
+                // dd($disposisi);
                 foreach ($disposisi['disposisi'] as $key => $value) {
+                    $disposisi_id = @$disposisi['id'][$key];
                     $update = [
-                        'id'        => @$disposisi['id'][$key],
+                        'id'        => $disposisi_id,
                         'disposisi' => $value,
                     ];
                     $dispomasuk = [
                         'noagenda'  => $surat_masuk->no_agenda,
-                        'periode'   => env('APP_PERIODE'),
+                        'periode'   => date('Y'),
                         'nomor'     => $data['no_surat'],
                         'disposisi' => $value,
                         'role'      => Auth::user()->role,
                         'user'      => Auth::user()->username,
-                        'ket'       => $disposisi['ket'][$key]
+                        'ket'       => $disposisi['ket'][$key],
                     ];
+                    if(@$disposisi['tindak'][$disposisi_id]){
+                        $dispomasuk['tindak'] = json_encode(@$disposisi['tindak'][$disposisi_id])?? '';
+                    }else{
+                        $dispomasuk['tindak'] = '';
+                    }
                     DispoMasuk::updateOrCreate($update, $dispomasuk);
+                    }
                 }
-            }
             DB::commit();
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'Gagal Di ubah');
@@ -188,10 +370,10 @@ class SuratMasukController extends Controller
         return redirect()->back()->with('success', 'Berhasil Di ubah');
     }
 
-    public function delete(SuratMasuk $surat_masuk) 
+    public function delete(SuratMasuk $surat_masuk)
     {
         try {
-            if($surat_masuk->dispomasuk()->count() > 0) {
+            if ($surat_masuk->dispomasuk()->count() > 0) {
                 $surat_masuk->dispomasuk()->delete();
             }
             $surat_masuk->delete();
@@ -206,51 +388,53 @@ class SuratMasukController extends Controller
         try {
             $data = $request->validate([
                 'notulen'       => 'required|string',
-                'file_dokument' => 'required|file|mimes:pdf,doc,docx|max:2048',
+                'file_dokument' => 'sometimes|file|mimes:pdf,doc,docx|max:2048',
                 'files'          => 'sometimes|array',
                 'files.*'        => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
             ]);
-            $filename = 'notulen_' . $no_agenda . '_' . time() . '.' . $request->file('file_dokument')->getClientOriginalExtension();
-            $request->file('file_dokument')->storeAs('notulen_masuk', $filename, 'public');
-            $original_name = $request->file('file_dokument')->getClientOriginalName();
+            if (isset($data['file_dokument'])) {
+                $filename = 'notulen_' . $no_agenda . '_' . time() . '.' . $request->file('file_dokument')->getClientOriginalExtension();
+                $request->file('file_dokument')->storeAs('notulen_masuk', $filename, 'public');
+                $original_name = $request->file('file_dokument')->getClientOriginalName();
+            }
             $surat_masuk = SuratMasuk::where('no_agenda', $no_agenda)->first();
             $notulen_masuk = NotulenMasuk::create([
-                'periode'       => env('APP_PERIODE'),
+                'periode'       => date('Y'),
                 'noagenda'      => $no_agenda,
-                'filename'      => $filename,
-                'original_name' => $original_name,
+                'filename'      => $filename ?? "",
+                'original_name' => $original_name ?? "",
                 'note'          => $request->notulen,
                 'user'          => Auth::user()->username,
             ]);
-            foreach ($data['files'] as $key => $value) {
-                $file = 'notulen_file_' . $no_agenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
-                $value->storeAs('notulen_files', $file, 'public');
-                NotulenFile::create([
-                    'notulen_id'       => $notulen_masuk->id,
-                    'file'             => $file,
-                    'jenis'            => 'IN',
-                    'original_name'    => $original_name,
-                ]);
+            if (!empty($data['files'])) {
+                foreach ($data['files'] as $key => $value) {
+                    $file = 'notulen_file_' . $no_agenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
+                    $value->storeAs('notulen_files', $file, 'public');
+                    NotulenFile::create([
+                        'notulen_id'       => $notulen_masuk->id,
+                        'file'             => $file,
+                        'jenis'            => 'IN',
+                        'original_name'    => $value->getClientOriginalName(),
+                    ]);
+                }
             }
-            
         } catch (\Throwable $th) {
-            return response()->json(['status' => 'error', 'message' => 'Notulen gagal diambil', 'error' => $th->getMessage()]);
+            return response()->json(['status' => 'error', 'message' => 'Notulen gagal diambil', 'error' => $th->getMessage(), 'request' => $request->all()]);
         }
         return response()->json(['status' => 'success', 'message' => 'Notulen berhasil diambil', 'no_agenda' => $no_agenda]);
-        
     }
 
     public function notulenData($no_agenda)
     {
         try {
             $notulen_masuk = NotulenMasuk::where('noagenda', $no_agenda)->first();
-            
-            if(!$notulen_masuk){
+
+            if (!$notulen_masuk) {
                 return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan']);
             }
 
             $notulen_masuk->files = NotulenFile::whereJenis('IN')->where('notulen_id', $notulen_masuk->id)->get();
-            
+
             return response()->json(['status' => 'success', 'notulen' => $notulen_masuk]);
         } catch (\Throwable $th) {
             return response()->json(['status' => 'error', 'message' => 'Gagal mengambil data', 'error' => $th->getMessage()]);
@@ -261,8 +445,8 @@ class SuratMasukController extends Controller
     {
         try {
             $notulen_masuk = NotulenMasuk::find($id);
-            
-            if(!$notulen_masuk){
+
+            if (!$notulen_masuk) {
                 return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan']);
             }
 
@@ -277,12 +461,12 @@ class SuratMasukController extends Controller
             $notulen_masuk->note = $data['notulen'];
 
             // Update file_dokument if provided
-            if($request->hasFile('file_dokument')){
+            if ($request->hasFile('file_dokument')) {
                 // Delete old file if exists
-                if($notulen_masuk->filename && Storage::disk('public')->exists('notulen_masuk/' . $notulen_masuk->filename)){
+                if ($notulen_masuk->filename && Storage::disk('public')->exists('notulen_masuk/' . $notulen_masuk->filename)) {
                     Storage::disk('public')->delete('notulen_masuk/' . $notulen_masuk->filename);
                 }
-                
+
                 $filename = 'notulen_' . $notulen_masuk->noagenda . '_' . time() . '.' . $request->file('file_dokument')->getClientOriginalExtension();
                 $request->file('file_dokument')->storeAs('notulen_masuk', $filename, 'public');
                 $notulen_masuk->filename = $filename;
@@ -292,7 +476,7 @@ class SuratMasukController extends Controller
             $notulen_masuk->save();
 
             // Add new files if provided
-            if(!empty($data['files'])){
+            if (!empty($data['files'])) {
                 foreach ($data['files'] as $key => $value) {
                     $file = 'notulen_file_' . $notulen_masuk->noagenda . '_' . time() . '_' . $key . '.' . $value->getClientOriginalExtension();
                     $value->storeAs('notulen_files', $file, 'public');
@@ -315,13 +499,13 @@ class SuratMasukController extends Controller
     {
         try {
             $notulen_file = NotulenFile::find($id);
-            
-            if(!$notulen_file){
+
+            if (!$notulen_file) {
                 return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan']);
             }
 
             // Delete file from storage
-            if($notulen_file->file && Storage::disk('public')->exists('notulen_files/' . $notulen_file->file)){
+            if ($notulen_file->file && Storage::disk('public')->exists('notulen_files/' . $notulen_file->file)) {
                 Storage::disk('public')->delete('notulen_files/' . $notulen_file->file);
             }
 
@@ -381,13 +565,13 @@ class SuratMasukController extends Controller
     {
         try {
             $arsip_surat = ArsipSurat::find($id);
-            
-            if(!$arsip_surat){
+
+            if (!$arsip_surat) {
                 return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan']);
             }
 
             // Delete file from storage
-            if($arsip_surat->file && Storage::disk('public')->exists('uploads/' . $arsip_surat->file)){
+            if ($arsip_surat->file && Storage::disk('public')->exists('uploads/' . $arsip_surat->file)) {
                 Storage::disk('public')->delete('uploads/' . $arsip_surat->file);
             }
 

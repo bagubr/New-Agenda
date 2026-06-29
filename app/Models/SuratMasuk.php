@@ -7,9 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class SuratMasuk extends Model
 {
     protected $table = 'surat_masuk';
-    const UPDATED_AT = 'time';
+    const UPDATED_AT = null;
     const CREATED_AT = 'time';
-    protected $primaryKey = 'no_agenda';
 
     protected $fillable = [
         'jns', 'asal', 'tanggal', 'no_surat', 'perihal', 'tgl_agenda', 'no_agenda', 'periode', 'jam', 'tmpt', 'acara', 'time', 'penerima', 'user', 'publish', 'note'
@@ -22,7 +21,7 @@ class SuratMasuk extends Model
 
     public function getJenisAttribute()
     {
-        return $this->jns == "1" ? 'Undangan':'Non Undangan';
+        return $this->jns == "1" ? 'Undangan': ($this->jns == "2" ? "Non Undangan" : "Usulan Pembangunan");
     }
 
     public function getDisposisiAllAttribute()

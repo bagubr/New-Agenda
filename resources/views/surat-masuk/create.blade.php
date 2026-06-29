@@ -2,6 +2,8 @@
 @push('css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/47.3.0/ckeditor5.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-5-theme/1.3.0/select2-bootstrap-5-theme.min.css"/>
 
     <style>
 	.main-container {
@@ -51,8 +53,10 @@
                                 <br>
                                 <input type="radio" class="form-check-input" id="undangan" name="jns" value="1" required/>
                                 <label class="form-check-label" for="undangan">Undangan</label>
-                                <input type="radio" class="form-check-input" id="nonundangan" name="jns" value="0" required/>
+                                <input type="radio" class="form-check-input" id="nonundangan" name="jns" value="2" required/>
                                 <label class="form-check-label" for="nonundangan">Non Undangan</label>
+                                <input type="radio" class="form-check-input" id="usulan_pembangunan" name="jns" value="3" required/>
+                                <label class="form-check-label" for="usulan_pembangunan">Usulan Pembangunan</label>
                             </div>
                             <div class="mb-1">
                                 <label for="no_agenda" class="form-label">No Agenda</label>
@@ -101,23 +105,15 @@
                                 <!-- <input type="text" name="asal" class="form-control" id="asal" required/> -->
                             </div>
                             <div class="mb-1">
-                                <label for="penandatangan" class="form-label">Penandatangan</label>
-                                <input type="text" name="penandatangan" class="form-control" id="penandatangan" required/>
-                            </div>
-                            <div class="mb-1">
                                 <label for="note" class="form-label">Catatan</label>
                                 <textarea name="note" class="form-control" style="width: 100%; height:150px;" id="note" required></textarea>
-                            </div>
-                            <div class="mb-1">
-                                <label for="publish" class="form-label">Publish ke Tvtrone ?</label>
-                                <input type="checkbox" class="form-check-input" id="publish" name="publish" value="1" />
                             </div>
                             <div class="card p-2 mb-1">
                                 <label for="disposisi" class="form-label"><b>Disposisi</b></label>
                                 <br>
                                 <select  class="form-control" id="disposisi" name="disposisi[]" multiple>
                                     @foreach ($disposisi as $item)
-                                        <option value="{{sprintf('%02d',  $item->id)}}" class="options">{{$item->disposisi}}</option>
+                                        <option value="{{$item->id}}" class="options">{{$item->disposisi}}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -164,11 +160,52 @@
         var html = '';
         $(this).find('option:selected').each(function() {
             var value = $(this).text();
+            var id = $(this).val();
             html += value;
+            html += '<div class="input-group">';
+            html += '<select name="tindak[]" class="form-control selectdisposisi" data-id="'+id+'" multiple>'
+            html += '<option value="">Pilih Tindak Lanjut</option>'
+            html += '</select>'
             html += '<input type="text" name="ket[]" class="form-control m-1" id="ket'+this.value+'"/>'
+            html += '</div>'
         });
         $('#disposisi_ket').html(html);
+
+        // Initialize select2 on dynamically created .selectdisposisi elements
+        $('#disposisi_ket').find('.selectdisposisi').each(function() {
+            var $el = $(this);
+            console.log($el.data('id'));
+            // destroy previous select2 if present to avoid dup errors
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
+            }
+            $el.select2({
+                tags: true,
+                width: 'resolve',
+                theme: 'bootstrap-5',
+                containerCssClass: ':all:',
+                ajax: {
+                    url: "{{ url('/pilih-user-data/') }}" + '/' + $el.data('id'),
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 300,
+                    processResults: function(params) {
+                        return {
+                            results: $.map(params.data, function(item) {
+                                return {
+                                    text: item.nama,
+                                    id: item.nama
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
     });
+
+    // No-op: .selectdisposisi initialization happens after dynamic creation above
 
     // jQuery submit button handler
     $(document).ready(function(){

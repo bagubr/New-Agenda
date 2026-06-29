@@ -175,12 +175,12 @@
             <div class="row">
                 @include('templates.alert')
                 <div class="col-sm-6">
-                    <h3 class="mb-0">Surat Masuk</h3>
+                    <h3 class="mb-0">Surat Terlewat</h3>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-end">
                         <li class="breadcrumb-item active" aria-current="page">
-                            Surat Masuk
+                            Surat Terlewat
                         </li>
                     </ol>
                 </div>
@@ -192,7 +192,7 @@
             <div class="col-md-12">
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h3 class="card-title">Surat Masuk</h3>
+                        <h3 class="card-title">Surat Terlewat</h3>
                         @if(Auth::user()->role == 'superadmin')
                         <div class="card-tools">
                             <a href="{{route('surat-masuk.create')}}" class="btn btn-success">Tambah</a>
@@ -374,7 +374,7 @@
             responsive: true,
             iDisplayLength: 10,
             ajax: {
-                url: "{{route('surat-masuk-data')}}",
+                url: "{{route('data-terlewat')}}",
                 complete: function(data) {
                     console.log('Succesfully get data');
                 }

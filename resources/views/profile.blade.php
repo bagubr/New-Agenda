@@ -35,9 +35,6 @@
                                 <div class="mb-3"> <label class="form-label">Username</label> <input
                                         type="text" name="username" class="form-control" value="{{\Auth::user()->username}}">
                                 </div>
-                                <div class="mb-3"> <label class="form-label">NIP</label> <input
-                                        type="text" name="nip" class="form-control" value="{{\Auth::user()->nip}}">
-                                </div>
                                 <label for="exampleInputPassword1" class="form-label">Password</label> 
                                 <div class="input-group mb-3">
                                     <input type="password" name="password" class="form-control" id="exampleInputPassword1">

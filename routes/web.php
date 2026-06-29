@@ -7,21 +7,27 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DispoKeluarController;
 use App\Http\Controllers\DispoMasukController;
 use App\Http\Controllers\DisposisiController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SuratMasukController;
 use App\Http\Controllers\SuratKeluarController;
-use App\Models\Disposisi;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {return view('login');})->name('login');
 Route::post('login', [AuthController::class, 'index'])->name('post-login');
-Route::middleware(['auth', 'auth.session'])->group(function () {
+Route::middleware(['auth', 'auth.session', 'role.access'])->group(function () {
     Route::put('/profile/{user}', [AuthController::class, 'profile_update'])->name('profile-update');
     Route::get('/profile', function () {return view('profile');})->name('profile');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
+    Route::get('/data-dashboard', [HomeController::class, 'data_dashboard'])->name('data-dashboard');
+    
     Route::post('/check-url', [HomeController::class, 'checkUrl'])->name('check-url');
     Route::get('/surat-masuk-edit/{surat_masuk}', [SuratMasukController::class, 'edit'])->name('surat-masuk.edit');
+    Route::get('/belum-disposisi', [SuratMasukController::class, 'disposisi'])->name('belum-disposisi');
+    Route::get('/data-disposisi', [SuratMasukController::class, 'data_disposisi'])->name('data-disposisi');
+    Route::get('/surat-terlewat', [SuratMasukController::class, 'terlewat'])->name('surat-terlewat');
+    Route::get('/data-terlewat', [SuratMasukController::class, 'data_terlewat'])->name('data-terlewat');
     Route::get('/surat-masuk', [SuratMasukController::class, 'index'])->name('surat-masuk');
     Route::get('/surat-masuk/create', [SuratMasukController::class, 'create'])->name('surat-masuk.create');
     Route::get('/surat-masuk/data', [SuratMasukController::class, 'data'])->name('surat-masuk-data');
@@ -34,6 +40,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::delete('/surat-masuk-delete/{surat_masuk}', [SuratMasukController::class, 'delete'])->name('surat-masuk-delete');
 
     Route::delete('/dispo_masuk/{dispo_masuk}', [DispoMasukController::class, 'delete'])->name('dispo-masuk-delete');
+    Route::get('/cetak-dispo/{dispo_masuk}', [DispoMasukController::class, 'cetak'])->name('cetak-dispo');
+    Route::get('/pilih-user-data/{dispo_masuk}', [DispoMasukController::class, 'pilihUserData'])->name('pilih-user-data');
+    Route::post('/user-dispo/{dispo_masuk}', [DispoMasukController::class, 'pilihUser'])->name('user-dispo');
+
     // Surat Keluar Routes
     Route::get('/surat-keluar', [SuratKeluarController::class, 'index'])->name('surat-keluar');
     Route::get('/surat-keluar/create', [SuratKeluarController::class, 'create'])->name('surat-keluar.create');
@@ -69,4 +79,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::get('/ruang-rapat/edit/{id}', [RuangRapatController::class, 'edit'])->name('ruang-rapat.edit');
     Route::put('/ruang-rapat/update/{id}', [RuangRapatController::class, 'update'])->name('ruang-rapat.update');
     Route::delete('/ruang-rapat/delete/{id}', [RuangRapatController::class, 'destroy'])->name('ruang-rapat.destroy');
+
+    Route::resource('users', UserController::class);
+    Route::resource('disposisi', DisposisiController::class);
 });

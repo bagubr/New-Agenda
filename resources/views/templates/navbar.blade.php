@@ -67,12 +67,12 @@
                         </div>
                     </li> -->
             <li class="nav-item"> <a class="nav-link" href="#" data-lte-toggle="fullscreen"> <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i> <i data-lte-icon="minimize" class="bi bi-fullscreen-exit" style="display: none;"></i> </a> </li>
-            <li class="nav-item dropdown user-menu"> <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"> <img src="{{url(\Auth::user()->image)}}" class="user-image rounded-circle shadow" alt="User Image"> <span class="d-none d-md-inline">{{\Auth::user()->name}}</span> </a>
+            <li class="nav-item dropdown user-menu"> <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"> <img src="@if(\Auth::user()->image){{url(\Auth::user()->image)}}@else{{url('/adminlte/dist/assets/img/user2-160x160.jpg')}}@endif" class="user-image rounded-circle shadow" alt="User Image"> <span class="d-none d-md-inline">{{\Auth::user()->name}}</span> </a>
                 <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                    <li class="user-header text-bg-primary"> <img src="{{url(\Auth::user()->image)}}" class="rounded-circle shadow" alt="User Image">
+                    <li class="user-header text-bg-primary"> <img src="@if(\Auth::user()->image){{url(\Auth::user()->image)}}@else{{url('/adminlte/dist/assets/img/user2-160x160.jpg')}}@endif" class="rounded-circle shadow" alt="User Image">
                         <p>
-                            {{\Auth::user()->name}}
-                            <small>({{\Auth::user()->nip}})</small>
+                            {{\Auth::user()->nama}}
+                            <small>({{\Auth::user()->devisi}})</small>
                         </p>
                     </li>
                     <li class="user-footer">
