@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Imports\SuratMasukImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SuratMasukController extends Controller
 {
@@ -30,14 +32,22 @@ class SuratMasukController extends Controller
         return view('surat-masuk.terlewat');
     }
 
-    public function data(Request $request)
+    public function surat_masuk_all(Request $request)
+    {
+        return view('surat-masuk.total-surat-masuk');
+    }
+
+    public function all(Request $request)
     {
         $draw = $request->get('draw');
         $start = @$request->get("start") ?? 0;
-        $rowperpage = @$request->get("length") ?? 0;
+        $rowperpage = @$request->get("length") ?? 10;
         $search_arr = $request->get('search');
         $startDate = @$request->get('startDate');
         $endDate = @$request->get('endDate');
+        $month = @$request->get('month');
+        $year = @$request->get('year');
+        $jenis = @$request->get('jenis');
 
         $searchValue = @$search_arr['value'] ?? '';
         DB::statement('SET @row_number = ' . $start);
@@ -47,7 +57,16 @@ class SuratMasukController extends Controller
             'surat_masuk.*'
         );
         $surat_masuk->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('tanggal', [$startDate, $endDate]);
+            $query->whereBetween('time', [$startDate, $endDate]);
+        });
+        $surat_masuk->when($month != '', function ($query) use ($month) {
+            $query->whereMonth('time', $month);
+        });
+        $surat_masuk->when($year != '', function ($query) use ($year) {
+            $query->whereYear('time', $year);
+        });
+        $surat_masuk->when($jenis != '', function ($query) use ($jenis) {
+            $query->where('jns', $jenis);
         });
         if (Auth::user()->role != 'superadmin' && Auth::user()->role != 'kepala_dinas') {
             $surat_masuk->has('dispomasuk');
@@ -82,58 +101,49 @@ class SuratMasukController extends Controller
                 ->get(),
         );
         return $response;
-        echo json_encode($response);
     }
 
-    public function data_disposisi(Request $request)
+    public function data(Request $request)
     {
-
         $draw = $request->get('draw');
         $start = @$request->get("start") ?? 0;
         $rowperpage = @$request->get("length") ?? 10;
         $search_arr = $request->get('search');
         $startDate = @$request->get('startDate');
         $endDate = @$request->get('endDate');
+        $month = @$request->get('month');
+        $year = @$request->get('year');
+        $jenis = @$request->get('jenis');
 
         $searchValue = @$search_arr['value'] ?? '';
         DB::statement('SET @row_number = ' . $start);
         $surat_masuk = SuratMasuk::query();
-        $surat_masuk->join('dispo_masuk', 'surat_masuk.no_agenda', '=', 'dispo_masuk.noagenda')
-            ->join('disposisi', 'disposisi.id', '=', 'dispo_masuk.disposisi');
-        if (Auth::user()->role != 'superadmin') {
-                if (Auth::user()->role != 'admin') {
-                    $surat_masuk->where('disposisi.role', Auth::user()->role);
-                }
-                $surat_masuk->where('devisi', Auth::user()->devisi);
-        }
-        $surat_masuk->where('jns', 1);
         $surat_masuk->select(
             DB::raw('@row_number := @row_number + 1 AS row_id'),
-            'surat_masuk.id as id',
-            'surat_masuk.no_agenda',
-            'surat_masuk.tanggal',
-            'surat_masuk.no_surat',
-            'surat_masuk.asal',
-            'surat_masuk.perihal',
-            'surat_masuk.perihal',
-            'surat_masuk.penerima',
-            'surat_masuk.time',
-            'surat_masuk.user',
-            'surat_masuk.periode',
-            'surat_masuk.jns',
-            'surat_masuk.tgl_agenda',
-            'surat_masuk.tmpt',
-            'surat_masuk.jam',
-            'surat_masuk.acara',
-            'surat_masuk.note',
-            'disposisi.role',
-            'disposisi.devisi',
+            'surat_masuk.*'
         );
-        $surat_masuk->whereHas('dispomasuk', function ($query) {
-            $query->whereNull('tindak')->orWhere('tindak', '');
-        })->whereHas('dispomasuk', function ($query) {
-            $query->whereNull('ket')->orWhere('ket', '');
+        $surat_masuk->whereDate('surat_masuk.time', date('Y-m-d'));
+        $surat_masuk->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('time', [$startDate, $endDate]);
         });
+        $surat_masuk->when($month != '', function ($query) use ($month) {
+            $query->whereMonth('time', $month);
+        });
+        $surat_masuk->when($year != '', function ($query) use ($year) {
+            $query->whereYear('time', $year);
+        });
+        $surat_masuk->when($jenis != '', function ($query) use ($jenis) {
+            $query->where('jns', $jenis);
+        });
+        if (Auth::user()->role != 'superadmin' && Auth::user()->role != 'kepala_dinas') {
+            $surat_masuk->has('dispomasuk');
+            $surat_masuk->whereHas('dispomasuk.dispo', function ($query) {
+                if (Auth::user()->role != 'admin') {
+                    $query->where('role', Auth::user()->role);
+                }
+                $query->where('devisi', Auth::user()->devisi);
+            });
+        }
         $surat_masuk->when($searchValue != '', function ($query) use ($searchValue) {
             $query->where(function ($query) use ($searchValue) {
                 $query->orWhere('surat_masuk.no_agenda', 'like', '%' . $searchValue . '%');
@@ -154,56 +164,101 @@ class SuratMasukController extends Controller
             "iTotalDisplayRecords" => $totalRecords,
             "aaData" => $surat_masuk->skip($start)
                 ->take($rowperpage)
-                ->orderBy('row_id')
-                ->groupBy('id', 'no_agenda')
+                ->orderBy('no_agenda', 'desc')
                 ->get(),
         );
-        echo json_encode($response);
+        return $response;
     }
 
-    public function data_terlewat(Request $request)
+    public function data_disposisi(Request $request)
     {
-
         $draw = $request->get('draw');
         $start = @$request->get("start") ?? 0;
         $rowperpage = @$request->get("length") ?? 10;
         $search_arr = $request->get('search');
         $startDate = @$request->get('startDate');
         $endDate = @$request->get('endDate');
+        $month = @$request->get('month');
+        $year = @$request->get('year');
+        $jenis = @$request->get('jenis');
 
         $searchValue = @$search_arr['value'] ?? '';
         DB::statement('SET @row_number = ' . $start);
         $surat_masuk = SuratMasuk::query();
-        $surat_masuk->join('dispo_masuk', 'surat_masuk.no_agenda', '=', 'dispo_masuk.noagenda')
-            ->join('disposisi', 'disposisi.id', '=', 'dispo_masuk.disposisi');
-        if (Auth::user()->role != 'superadmin') {
-                if (Auth::user()->role != 'admin') {
-                    $surat_masuk->where('disposisi.role', Auth::user()->role);
-                }
-                $surat_masuk->where('devisi', Auth::user()->devisi);
-        }
-        $surat_masuk->where('jns', 1);
         $surat_masuk->select(
             DB::raw('@row_number := @row_number + 1 AS row_id'),
-            'surat_masuk.id as id',
-            'surat_masuk.no_agenda',
-            'surat_masuk.tanggal',
-            'surat_masuk.no_surat',
-            'surat_masuk.asal',
-            'surat_masuk.perihal',
-            'surat_masuk.perihal',
-            'surat_masuk.penerima',
-            'surat_masuk.time',
-            'surat_masuk.user',
-            'surat_masuk.periode',
-            'surat_masuk.jns',
-            'surat_masuk.tgl_agenda',
-            'surat_masuk.tmpt',
-            'surat_masuk.jam',
-            'surat_masuk.acara',
-            'surat_masuk.note',
-            'disposisi.role',
-            'disposisi.devisi',
+            'surat_masuk.*'
+        );
+        $surat_masuk->whereHas('dispomasuk', function ($query) {
+            $query->whereNull('tindak')->orWhere('tindak', '');
+        })->whereHas('dispomasuk', function ($query) {
+            $query->whereNull('ket')->orWhere('ket', '');
+        });
+        $surat_masuk->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('time', [$startDate, $endDate]);
+        });
+        $surat_masuk->when($month != '', function ($query) use ($month) {
+            $query->whereMonth('time', $month);
+        });
+        $surat_masuk->when($year != '', function ($query) use ($year) {
+            $query->whereYear('time', $year);
+        });
+        $surat_masuk->when($jenis != '', function ($query) use ($jenis) {
+            $query->where('jns', $jenis);
+        });
+        if (Auth::user()->role != 'superadmin' && Auth::user()->role != 'kepala_dinas') {
+            $surat_masuk->has('dispomasuk');
+            $surat_masuk->whereHas('dispomasuk.dispo', function ($query) {
+                if (Auth::user()->role != 'admin') {
+                    $query->where('role', Auth::user()->role);
+                }
+                $query->where('devisi', Auth::user()->devisi);
+            });
+        }
+        $surat_masuk->when($searchValue != '', function ($query) use ($searchValue) {
+            $query->where(function ($query) use ($searchValue) {
+                $query->orWhere('surat_masuk.no_agenda', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.asal', 'like', '%' . $searchValue . '%');
+                $query->orWhereDate('surat_masuk.no_surat', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.perihal', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.tmpt', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.jam', 'like', '%' . $searchValue . '%');
+                $query->orWhere('surat_masuk.acara', 'like', '%' . $searchValue . '%');
+            });
+        });
+
+        $totalRecords = $surat_masuk->count();
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecords,
+            "iTotalDisplayRecords" => $totalRecords,
+            "aaData" => $surat_masuk->skip($start)
+                ->take($rowperpage)
+                ->orderBy('no_agenda', 'desc')
+                ->get(),
+        );
+        return $response;
+    }
+
+    public function data_terlewat(Request $request)
+    {
+        $draw = $request->get('draw');
+        $start = @$request->get("start") ?? 0;
+        $rowperpage = @$request->get("length") ?? 10;
+        $search_arr = $request->get('search');
+        $startDate = @$request->get('startDate');
+        $endDate = @$request->get('endDate');
+        $month = @$request->get('month');
+        $year = @$request->get('year');
+        $jenis = @$request->get('jenis');
+
+        $searchValue = @$search_arr['value'] ?? '';
+        DB::statement('SET @row_number = ' . $start);
+        $surat_masuk = SuratMasuk::query();
+        $surat_masuk->select(
+            DB::raw('@row_number := @row_number + 1 AS row_id'),
+            'surat_masuk.*'
         );
         $surat_masuk->whereHas('dispomasuk', function ($query) {
             $query->whereNull('tindak')->orWhere('tindak', '');
@@ -211,6 +266,27 @@ class SuratMasukController extends Controller
             $query->whereNull('ket')->orWhere('ket', '');
         });
         $surat_masuk->whereDate('tgl_agenda', '<', date('Y-m-d'));
+        $surat_masuk->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('time', [$startDate, $endDate]);
+        });
+        $surat_masuk->when($month != '', function ($query) use ($month) {
+            $query->whereMonth('time', $month);
+        });
+        $surat_masuk->when($year != '', function ($query) use ($year) {
+            $query->whereYear('time', $year);
+        });
+        $surat_masuk->when($jenis != '', function ($query) use ($jenis) {
+            $query->where('jns', $jenis);
+        });
+        if (Auth::user()->role != 'superadmin' && Auth::user()->role != 'kepala_dinas') {
+            $surat_masuk->has('dispomasuk');
+            $surat_masuk->whereHas('dispomasuk.dispo', function ($query) {
+                if (Auth::user()->role != 'admin') {
+                    $query->where('role', Auth::user()->role);
+                }
+                $query->where('devisi', Auth::user()->devisi);
+            });
+        }
         $surat_masuk->when($searchValue != '', function ($query) use ($searchValue) {
             $query->where(function ($query) use ($searchValue) {
                 $query->orWhere('surat_masuk.no_agenda', 'like', '%' . $searchValue . '%');
@@ -231,16 +307,18 @@ class SuratMasukController extends Controller
             "iTotalDisplayRecords" => $totalRecords,
             "aaData" => $surat_masuk->skip($start)
                 ->take($rowperpage)
-                ->orderBy('row_id')
-                ->groupBy('id', 'no_agenda')
+                ->orderBy('no_agenda', 'desc')
                 ->get(),
         );
-        echo json_encode($response);
+        return $response;
     }
 
     public function create()
     {
-        $no_agenda = @SuratMasuk::where('periode', date('Y'))->orderBy('no_agenda', 'desc')->first()->no_agenda ?? 0;
+        $no_agenda = explode('/', @SuratMasuk::where('periode', date('Y'))->orderBy('no_agenda', 'desc')->first()->no_agenda)[0] ?? 0;
+        if ($no_agenda == "") {
+            $no_agenda = 0;
+        }
         $no_agenda = str_pad($no_agenda + 1, 5, '0', STR_PAD_LEFT) . '/' . date('m') . '/' . date('Y');
         $disposisi = Disposisi::groupBy('disposisi')->orderBy('id')->where('aktif', 1)->get();
         $asal = DB::table('surat_masuk')->select('asal')->orderBy('asal')->get()->pluck('asal', 'asal')->unique();
@@ -266,12 +344,12 @@ class SuratMasukController extends Controller
             'no_surat'      => 'required|unique:surat_masuk,no_surat',
             'asal'          => 'required',
             // 'penerima'      => 'required',
-            'note'          => 'sometimes'
+            'note'          => 'sometimes',
+            'no_agenda'     => 'required|unique:surat_masuk,no_agenda',
         ]);
         $data['penerima'] = Auth::user()->username;
-        // try {
-        //     DB::beginTransaction();
-            $data['no_agenda'] = SuratMasuk::orderBy('no_agenda', 'desc')->first()->no_agenda + 1;
+        try {
+            DB::beginTransaction();
             $data['f_umum'] = 1;
             $data['user'] = Auth::user()->username;
             $data['periode'] = date('Y');
@@ -288,8 +366,7 @@ class SuratMasukController extends Controller
                 ]);
                 foreach ($disposisi['disposisi'] as $key => $value) {
                     $dispomasuk = [
-                        'periode'   => date('Y'),
-                        'noagenda'  => $data['no_agenda'],
+                        'no_agenda'  => $data['no_agenda'],
                         'nomor'     => $data['no_surat'],
                         'disposisi' => $value,
                         'role'      => Auth::user()->role,
@@ -300,11 +377,11 @@ class SuratMasukController extends Controller
                     DispoMasuk::create($dispomasuk);
                 }
             }
-            // DB::commit();
-        // } catch (\Throwable $th) {
-        //     DB::rollback();
-        //     return response()->json(['status' => 'error', 'message' => 'gagal disimpan', 'error' => $th->getMessage()]);
-        // }
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => 'gagal disimpan', 'error' => $th->getMessage()]);
+        }
         return response()->json(['status' => 'success', 'message' => 'berhasil disimpan']);
     }
 
@@ -347,8 +424,7 @@ class SuratMasukController extends Controller
                         'disposisi' => $value,
                     ];
                     $dispomasuk = [
-                        'noagenda'  => $surat_masuk->no_agenda,
-                        'periode'   => date('Y'),
+                        'no_agenda'  => $surat_masuk->no_agenda,
                         'nomor'     => $data['no_surat'],
                         'disposisi' => $value,
                         'role'      => Auth::user()->role,
@@ -591,5 +667,20 @@ class SuratMasukController extends Controller
     {
         $files = ArsipSurat::where('no_agenda', $id)->get();
         return response()->json(['status' => 'success', 'files' => $files]);
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls|max:10240',
+            ]);
+
+            $file = $request->file('file');
+            Excel::import(new SuratMasukImport, $file);
+            return redirect()->back()->with('success', 'File berhasil diimpor');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'File gagal diunggah: ' . $th->getMessage());
+        }
     }
 }

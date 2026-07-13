@@ -9,9 +9,15 @@
                         </p>
                     </a>
                 </li>
-                <li class="nav-item"> <a href="{{route('surat-masuk')}}" class="nav-link {{Request::routeIs('surat-masuk')?'active':''}}"> <i class="nav-icon bi bi-inbox-fill"></i>
+                <li class="nav-item"> <a href="{{route('surat-masuk-all')}}" class="nav-link {{Request::routeIs('surat-masuk-all')?'active':''}}"> <i class="nav-icon bi bi-inbox-fill"></i>
                         <p>
                             Surat Masuk
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item"> <a href="{{route('surat-masuk')}}" class="nav-link {{Request::routeIs('surat-masuk')?'active':''}}"> <i class="nav-icon bi bi-calendar-check"></i>
+                        <p>
+                            Surat Masuk Hari ini
                         </p>
                     </a>
                 </li>
@@ -28,25 +34,25 @@
                     </a>
                 </li>
                 @if(auth()->user()->role !== 'user')
-                <li class="nav-item"> <a href="{{route('surat-keluar')}}" class="nav-link {{Request::routeIs('surat-keluar')?'active':''}}"> <i class="nav-icon bi bi-send"></i>
+                <!-- <li class="nav-item"> <a href="{{route('surat-keluar')}}" class="nav-link {{Request::routeIs('surat-keluar')?'active':''}}"> <i class="nav-icon bi bi-send"></i>
                         <p>
                             Surat Keluar
                         </p>
                     </a>
-                </li>
-                <li class="nav-item"> <a href="{{route('arsip-surat')}}" class="nav-link {{Request::routeIs('arsip-surat')?'active':''}}"> <i class="nav-icon bi bi-inboxes"></i>
+                </li> -->
+                <!-- <li class="nav-item"> <a href="{{route('arsip-surat')}}" class="nav-link {{Request::routeIs('arsip-surat')?'active':''}}"> <i class="nav-icon bi bi-inboxes"></i>
                         <p>
                             Arsip Surat
                         </p>
                     </a>
-                </li>
+                </li> -->
                 <!-- <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-pencil-square"></i>
                         <p>
                             Buat Surat Baru
                         </p>
                     </a>
                 </li> -->
-                <li class="nav-item"> <a href="#" class="nav-link"> <i class="nav-icon bi bi-bar-chart"></i>
+                <li class="nav-item"> <a href="{{route('laporan')}}" class="nav-link {{Request::routeIs('laporan*')?'active':''}}"> <i class="nav-icon bi bi-bar-chart"></i>
                         <p>
                             Laporan Bulanan / Tahunan
                         </p>

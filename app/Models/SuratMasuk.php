@@ -16,7 +16,8 @@ class SuratMasuk extends Model
 
     protected $appends = [
         'jenis',
-        'disposisi_all'
+        'disposisi_all',
+        'disposisi_keterangan',
     ];
 
     public function getJenisAttribute()
@@ -30,9 +31,24 @@ class SuratMasuk extends Model
         return implode(', ', Disposisi::whereIn('id', $array)->groupBy('disposisi')->get()->pluck('disposisi')->toArray());
     }
 
+    public function getDisposisiKeteranganAttribute()
+    {
+        $array = $this->dispomasuk()->get(['disposisi', 'tindak', 'ket'])->toArray();
+        $array = array_map(function ($item) {
+            return [
+                'disposisi' => Disposisi::find($item['disposisi'])->disposisi,
+                'tindak' => $item['tindak'],
+                'keterangan' => $item['ket'],
+            ];
+        }, $array);
+        return implode(PHP_EOL , array_map(function ($item) {
+            return $item['disposisi'] . " (Tindak: " . (is_array(json_decode($item['tindak'])) ? implode(', ', json_decode($item['tindak'])) : $item['tindak']) . ") (Keterangan: " . $item['keterangan'] . ")";
+        }, $array));
+    }
+
     public function dispomasuk()
     {
-        return $this->hasMany(DispoMasuk::class, 'noagenda', 'no_agenda');
+        return $this->hasMany(DispoMasuk::class, 'no_agenda', 'no_agenda');
     }
 
     public function arsipSurat()

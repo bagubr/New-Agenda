@@ -10,7 +10,7 @@ class DispoMasuk extends Model
     const UPDATED_AT = 'time';
     const CREATED_AT = 'time';
     protected $fillable = [
-        'noagenda', 'periode', 'disposisi', 'nomor', 'role', 'user', 'ket', 'tindak'
+        'no_agenda', 'disposisi', 'nomor', 'role', 'user', 'ket', 'tindak'
     ];
 
     protected $appends = [
