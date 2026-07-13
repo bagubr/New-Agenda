@@ -390,14 +390,19 @@
         data: {
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'],
             datasets: [{
-                    label: 'Surat Masuk',
+                    label: 'Surat Undangan',
                     data: @json($data['grafik_surat_masuk']),
                     backgroundColor: '#60A5FA'
                 },
                 {
-                    label: 'Surat Keluar',
-                    data: @json($data['grafik_surat_keluar']),
+                    label: 'Surat Non-Undangan',
+                    data: @json($data['grafik_surat_masuk_non']),
                     backgroundColor: '#34D399'
+                },
+                {
+                    label: 'Surat Usulan',
+                    data: @json($data['grafik_surat_masuk_usulan']),
+                    backgroundColor: '#FBBF24'
                 }
             ]
         }

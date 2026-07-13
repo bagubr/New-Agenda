@@ -33,8 +33,9 @@ class HomeController extends Controller
                 ->orWhere('ket', '');
         })->where('jns', 1)->groupBy('surat_masuk.id')->get();
         $data['surat_selesai'] = $query->whereDate('tgl_agenda', '<', date('Y-m-d'))->orderBy('surat_masuk.id', 'desc')->groupBy('surat_masuk.id')->get();
-        $data['grafik_surat_masuk'] = DB::table('surat_masuk')->select(DB::raw('DATE_FORMAT(tgl_agenda, "%Y-%m") as month, COUNT(*) as count'))->whereYear('tgl_agenda', date('Y'))->groupBy('month')->orderBy('month', 'asc')->get()->pluck('count')->toArray();
-        $data['grafik_surat_keluar'] = DB::table('surat_keluar')->select(DB::raw('DATE_FORMAT(tgl_agenda, "%Y-%m") as month, COUNT(*) as count'))->whereYear('tgl_agenda', date('Y'))->groupBy('month')->orderBy('month', 'asc')->get()->pluck('count')->toArray();
+        $data['grafik_surat_masuk'] = DB::table('surat_masuk')->select(DB::raw('DATE_FORMAT(tgl_agenda, "%Y-%m") as month, COUNT(*) as count'))->where('jns', 1)->whereYear('tgl_agenda', date('Y'))->groupBy('month')->orderBy('month', 'asc')->get()->pluck('count')->toArray();
+        $data['grafik_surat_masuk_non'] = DB::table('surat_masuk')->select(DB::raw('DATE_FORMAT(tgl_agenda, "%Y-%m") as month, COUNT(*) as count'))->where('jns', 2)->whereYear('tgl_agenda', date('Y'))->groupBy('month')->orderBy('month', 'asc')->get()->pluck('count')->toArray();
+        $data['grafik_surat_masuk_usulan'] = DB::table('surat_masuk')->select(DB::raw('DATE_FORMAT(tgl_agenda, "%Y-%m") as month, COUNT(*) as count'))->where('jns', 3)->whereYear('tgl_agenda', date('Y'))->groupBy('month')->orderBy('month', 'asc')->get()->pluck('count')->toArray();
         return view('welcome', compact('data'));
     }
 }
