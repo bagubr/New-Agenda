@@ -767,7 +767,7 @@
             uploadedFiles.push({
                 name: file.name,
                 size: file.size,
-                path: 'storage/' + response.path || file.name,
+                path:'{{config("app.url")}}' +  '/storage/' + response.path || file.name,
                 id: fileId
             });
             updateFilesList(uploadedFiles);
@@ -928,19 +928,19 @@
                             name: name,
                             size: size,
                             serverFileId: f.id,
-                            path: '/storage/uploads/' + f.file
+                            path: '{{config("app.url")}}' + '/storage/uploads/' + f.file
                         };
 
                         myDropzone.emit('addedfile', mockFile);
                         myDropzone.emit('complete', mockFile);
                         if (/(jpe?g|png|gif)$/i.test(name)) {
-                            myDropzone.emit('thumbnail', mockFile, '/storage/uploads/' + f.file);
+                            myDropzone.emit('thumbnail', mockFile, '{{config("app.url")}}' + '/storage/uploads/' + f.file);
                         }
                         myDropzone.files.push(mockFile);
                         uploadedFiles.push({
                             name: name,
                             size: size,
-                            path: '/storage/uploads/' + f.file,
+                            path: '{{config("app.url")}}' + '/storage/uploads/' + f.file,
                             id: f.id
                         });
                         totalFileSize += size;
