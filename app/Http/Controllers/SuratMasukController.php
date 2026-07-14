@@ -194,6 +194,7 @@ class SuratMasukController extends Controller
         })->whereHas('dispomasuk', function ($query) {
             $query->whereNull('ket')->orWhere('ket', '');
         });
+        $surat_masuk->whereDate('tgl_agenda', '>', date('Y-m-d'));
         $surat_masuk->when($startDate != '' && $endDate != '', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('time', [$startDate, $endDate]);
         });
