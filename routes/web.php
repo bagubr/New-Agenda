@@ -4,14 +4,12 @@ use App\Http\Controllers\ArsipSuratController;
 use App\Http\Controllers\AsalController;
 use App\Http\Controllers\RuangRapatController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DispoKeluarController;
 use App\Http\Controllers\DispoMasukController;
 use App\Http\Controllers\DisposisiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SuratMasukController;
-use App\Http\Controllers\SuratKeluarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {return view('login');})->name('login');
@@ -48,20 +46,7 @@ Route::middleware(['auth', 'auth.session', 'role.access'])->group(function () {
     Route::get('/pilih-user-data/{dispo_masuk}', [DispoMasukController::class, 'pilihUserData'])->name('pilih-user-data');
     Route::post('/user-dispo/{dispo_masuk}', [DispoMasukController::class, 'pilihUser'])->name('user-dispo');
 
-    // Surat Keluar Routes
-    Route::get('/surat-keluar', [SuratKeluarController::class, 'index'])->name('surat-keluar');
-    Route::get('/surat-keluar/create', [SuratKeluarController::class, 'create'])->name('surat-keluar.create');
-    Route::get('/surat-keluar/data', [SuratKeluarController::class, 'data'])->name('surat-keluar-data');
-    Route::get('/surat-keluar-edit/{surat_keluar}', [SuratKeluarController::class, 'edit'])->name('surat-keluar.edit');
-    Route::post('/surat-keluar', [SuratKeluarController::class, 'post'])->name('surat-keluar-post');
-    Route::put('/surat-keluar-update/{surat_keluar}', [SuratKeluarController::class, 'update'])->name('surat-keluar.update');
-    Route::delete('/surat-keluar-delete/{surat_keluar}', [SuratKeluarController::class, 'delete'])->name('surat-keluar-delete');
-    Route::post('/surat-keluar-notulen/{no_agenda}', [SuratKeluarController::class, 'notulen'])->name('surat-keluar-notulen');
-    Route::put('/surat-keluar-notulen-update/{id}', [SuratKeluarController::class, 'notulenUpdate'])->name('surat-keluar-notulen-update');
-    Route::get('/surat-keluar-notulen-data/{no_agenda}', [SuratKeluarController::class, 'notulenData'])->name('surat-keluar-notulen-data');
-    Route::delete('/surat-keluar-notulen-file-delete/{id}', [SuratKeluarController::class, 'notulenFileDelete'])->name('surat-keluar-notulen-file-delete');
-    
-    Route::delete('/dispo_keluar/{dispo_keluar}', [DispoKeluarController::class, 'delete'])->name('dispo-keluar-delete');
+
     Route::delete('/delete-file/{id}', [SuratMasukController::class, 'deleteFile'])->name('delete-file');
     Route::post('/upload-file', [SuratMasukController::class, 'uploadFile'])->name('upload-file');
     // endpoint to fetch uploaded files for a specific surat masuk (used by index view)
