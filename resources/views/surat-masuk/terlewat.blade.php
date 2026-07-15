@@ -749,7 +749,7 @@
     var totalFileSize = 0;
 
     var myDropzone = new Dropzone('#myDropzone', {
-        maxFilesize: 2,
+        maxFilesize: 5,
         acceptedFiles: '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif',
         addRemoveLinks: true,
         paramName: 'file',
