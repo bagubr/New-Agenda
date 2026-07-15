@@ -648,8 +648,8 @@ class SuratMasukController extends Controller
             }
 
             // Delete file from storage
-            if ($arsip_surat->file && Storage::disk('public')->exists('storage/uploads/' . $arsip_surat->file)) {
-                Storage::disk('public')->delete('storage/uploads/' . $arsip_surat->file);
+            if ($arsip_surat->file && Storage::disk('public')->exists('uploads/' . $arsip_surat->file)) {
+                Storage::disk('public')->delete('uploads/' . $arsip_surat->file);
             }
 
             // Delete record from database

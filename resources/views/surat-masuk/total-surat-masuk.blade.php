@@ -801,7 +801,6 @@
                         }
                     })
                     .catch(error => {
-                        console.error('Delete error:', error);
                         Swal.fire('Error', 'Gagal menghapus file', 'error');
                     });
             }
